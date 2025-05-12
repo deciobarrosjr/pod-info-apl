@@ -198,12 +198,14 @@ jobs:
           echo ">>>>> Folder: ./." && ls -al ./.
           [ -d "./application" ] && echo ">>>>> Folder: application" && ls -al ./application
           [ -d "./.github/actions" ] && echo ">>>>> Folder: ./.github/actions" && ls -al ./.github/actions
+          echo ">>>>> Versions: "
+          [ -f "./versions.yml" ] && cat ./versions.yml
 
       # RECOVER THE APP VERSION
 
       - name: Get the Current App version
         run: |
-          cur_apl_version=$(yq '.pod-info-apl_version' 'versions.yml')
+          cur_apl_version=$(yq '.pod-info-apl_version' './versions.yml')
           echo "cur_apl_version=${cur_apl_version}" >> $GITHUB_ENV
 
       # CREATING THE DOCKER FOLDER TO COPY THE BINARIES AND DOCKERFILE TO IT
