@@ -42,9 +42,15 @@ env:
  
 
 jobs:
-  Setup:
-    runs-on: ubuntu-latest
-    name: Checkout/Upload pod-info-apl.
+  ############################################################################################################
+  #                                         BUILD & PUSH DOCKER IMAGE                                        #
+  ############################################################################################################
+      
+  Build-Push-Image:
+    runs-on: ubuntu-latest  
+    name: Build and pushes image.
+    needs: Setup  
+
     steps:
 
       # ACTIONS - CHECKOUT THE LOCAL GITHUB ACTIONS
@@ -65,130 +71,6 @@ jobs:
         with:
           show-progress: ${{ env.VERBOSE }} 
 
-      # OUTPUTS THE CURRENT INSTALLED VERSIONS WHEN THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
-
-      - name: VERBOSE (Setup) - Checking current installed versions and folders
-        if: ${{ env.VERBOSE == 'true' }}
-        run: |
-          echo ">>>>> Checking the local repository ..."   
-          ls -al      
-          echo " "
-
-          echo ">>>>> Checking tools versions installed on the environment ..."        
-          echo " "
-      
-          for cmd in "python3 --version" "pip3 --version" "tar --version" "docker --version" "helm version" "dotnet --list-runtimes" "yq --version" "envsubst --version"; do
-            echo "> $cmd"
-            $cmd
-            echo " "
-          done
-      
-          echo ">>>>> Cheking End."
-
-      # GET THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
-
-      - name: pod-info-apl - Get the Current App version
-        uses: ./.github/actions/get-app-version
-        id: apl-get-app-version
-        with:
-          app_folder: "./application"
-          verbose: ${{ env.VERBOSE }}
-
-      # CREATES A FILE versions.yml WITH THE VERSION NUMBER OF THE APPLICATION
-
-      - name: Create versions.yml
-        id: create-versions-yml
-        run: |
-          rm -rf versions.yml; touch versions.yml
-          echo "pod-info-apl_version: ${{ steps.apl-get-app-version.outputs.version }}" >> versions.yml
-
-
-      # UPLOADS THE VERSION.YML TO BE USED ON THE NEXT JOBS
-
-      - name: Upload pod-info-apl
-        uses: actions/upload-artifact@v4
-        with:
-          name: pod-info-apl
-          path: |
-            application/
-            versions.yml
-
-      - name: Listing the current operations versions
-        run: |
-          echo ">>>>> Listing the version found for each operation."
-          cat versions.yml
-          echo ""
-
-
-  ############################################################################################################
-  #                                                PREPARING FOR BUILD                                       #
-  ############################################################################################################
-
-#  Build-pod-info-apl:
-#    runs-on: ubuntu-latest
-#    name: Setup/Build.
-#    needs: Setup
-#    steps:
-
-    # CHECKOUT THE FILES TO CREATE THE DOCKER IMAGE
-
-#    - name: Download pod-info-apl
-##      uses: actions/download-artifact@v4
-#      with:        
-#        name: pod-info-apl
-
-    # VERBOSE - LISTS THE CHECKOUT FOLDERS IF THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
-
-#    - name: Verbose - Lists Checkout folders
-#      if: ${{ env.VERBOSE == 'true' }}
-#      run: |
-#        ls -al ./.
-#        ls -al ./application
-
-    # UPLOAD THE FILES TO CREATE THE DOCKER IMAGE
-
-#    - name: Upload the pod-info-apl files to create the Docker image later
-##      uses: actions/upload-artifact@v4
-#      with:
-#        name: pod-info-apl-build
-#        path: |
-#          app.py
-#          Dockerfile
-
-
-
-  ############################################################################################################
-  #                                         BUILD & PUSH DOCKER IMAGE                                        #
-  ############################################################################################################
-      
-  Build-Push-Image:
-    runs-on: ubuntu-latest  
-    name: Build and pushes image.
-    needs: Setup  
-
-    steps:
-
-      # CHECKOUT THE LOCAL GITHUB ACTIONS 
-
-      - name: Download actions
-        uses: actions/checkout@v4
-        with:
-          show-progress: ${{ env.VERBOSE }}          
-          path: ./. 
-          fetch-depth: 1
-          sparse-checkout: |
-            .github  
-
-      # CHECKOUT THE FILES TO CREATE THE DOCKER IMAGES
-        
-      - name: Download pod-info-apl
-        uses: actions/download-artifact@v4
-        with:
-          name: pod-info-apl
-          path: |
-            application/
-            versions.yml
-
 
       # VERBOSE - LISTS THE CHECKOUT FOLDERS IF THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
 
@@ -199,15 +81,21 @@ jobs:
           ls -al ./.
           [ -d "./application" ] && echo ">>>>> Folder: application" && ls -l application
           [ -d "./.github/actions" ] && echo ">>>>> Folder: ./.github/actions" && ls -al ./.github/actions
-          echo ">>>>> Versions: "
-          [ -f "versions.yml" ] && cat versions.yml
 
-      # RECOVER THE APP VERSION
+      # GET THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
 
-      - name: Get the Current App version
+      - name: pod-info-apl - Get the Current App version
+        uses: ./.github/actions/get-app-version
+        id: apl-get-app-version
+        with:
+          app_folder: "./application"
+          verbose: ${{ env.VERBOSE }}
+
+      # VERBOSE - LISTS THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
+
+      - name: Verbose - print the Current App version
         run: |
-          cur_apl_version=$(yq '.pod-info-apl_version' './versions.yml')
-          echo "cur_apl_version=${cur_apl_version}" >> $GITHUB_ENV
+          echo ">>>>> Version of the pod-info-apl : ${{ steps.apl-get-app-version.outputs.version }}"
 
       # CREATING THE DOCKER FOLDER TO COPY THE BINARIES AND DOCKERFILE TO IT
 
@@ -232,7 +120,7 @@ jobs:
         with:
           context: ./application
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/${{ env.APL_DOCKER_IMAGE_NAME }}:${{ env.cur_apl_version }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.APL_DOCKER_IMAGE_NAME }}:${{ steps.apl-get-app-version.outputs.version }}
 
       # VERBOSE - LISTS THE THE DOCKER LOCAL IMAGES CREATED  
 
