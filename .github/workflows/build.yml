@@ -197,10 +197,10 @@ jobs:
         run: |
           echo ">>>>> Folder: ./."
           ls -al ./.
-          [ -d "./application" ] && echo ">>>>> Folder: application" && ls -al ./application
+          [ -d "./application" ] && echo ">>>>> Folder: application" && ls -l application
           [ -d "./.github/actions" ] && echo ">>>>> Folder: ./.github/actions" && ls -al ./.github/actions
           echo ">>>>> Versions: "
-          [ -f "./versions.yml" ] && cat ./versions.yml
+          [ -f "versions.yml" ] && cat versions.yml
 
       # RECOVER THE APP VERSION
 
