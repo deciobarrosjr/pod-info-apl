@@ -115,12 +115,12 @@ jobs:
 
       # AUTHENTICATING WITH THE GITHUB CONTAINER REGISTRY
 
-      - name: Authenticate with GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io/${{ github.actor }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Authenticate with GitHub Container Registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io/${{ github.actor }}
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
 
       # CREATING THE DOCKER IMAGE AND PUSHING IT TO THE REGISTRY
 
