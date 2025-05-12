@@ -112,6 +112,15 @@ jobs:
             [ -d "./$SOURCE_FOLDER/$DOCKER_FOLDER" ] && ls -al ./$SOURCE_FOLDER/$DOCKER_FOLDER
           fi
 
+      # AUTHENTICATING WITH THE GITHUB CONTAINER REGISTRY
+
+      - name: Authenticate with GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       # CREATING THE DOCKER IMAGE AND PUSHING IT TO THE REGISTRY
 
       - name: Build and push Docker image to GitHub Container Registry
