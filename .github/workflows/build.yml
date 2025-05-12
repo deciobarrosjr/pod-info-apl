@@ -140,7 +140,7 @@ jobs:
     - name: Download pod-info-apl
       uses: actions/download-artifact@v4
       with:        
-        name: apl-get-app-version
+        name: pod-info-apl
 
     # VERBOSE - LISTS THE CHECKOUT FOLDERS IF THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
 
