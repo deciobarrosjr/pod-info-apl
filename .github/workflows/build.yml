@@ -124,26 +124,26 @@ jobs:
   #                                                PREPARING FOR BUILD                                       #
   ############################################################################################################
 
-  Build-pod-info-apl:
-    runs-on: ubuntu-latest
-    name: Setup/Build.
-    needs: Setup
-    steps:
+#  Build-pod-info-apl:
+#    runs-on: ubuntu-latest
+#    name: Setup/Build.
+#    needs: Setup
+#    steps:
 
     # CHECKOUT THE FILES TO CREATE THE DOCKER IMAGE
 
-    - name: Download pod-info-apl
-      uses: actions/download-artifact@v4
-      with:        
-        name: pod-info-apl
+#    - name: Download pod-info-apl
+##      uses: actions/download-artifact@v4
+#      with:        
+#        name: pod-info-apl
 
     # VERBOSE - LISTS THE CHECKOUT FOLDERS IF THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
 
-    - name: Verbose - Lists Checkout folders
-      if: ${{ env.VERBOSE == 'true' }}
-      run: |
-        ls -al ./.
-        ls -al ./application
+#    - name: Verbose - Lists Checkout folders
+#      if: ${{ env.VERBOSE == 'true' }}
+#      run: |
+#        ls -al ./.
+#        ls -al ./application
 
     # UPLOAD THE FILES TO CREATE THE DOCKER IMAGE
 
@@ -164,7 +164,7 @@ jobs:
   Build-Push-Image:
     runs-on: ubuntu-latest  
     name: Build and pushes image.
-    needs: Build-pod-info-apl  
+    needs: Setup  
 
     steps:
 
@@ -186,7 +186,7 @@ jobs:
         with:
           name: pod-info-apl
           path: |
-            ./application 
+            application/
             versions.yml
 
 
@@ -195,7 +195,8 @@ jobs:
       - name: Verbose - Lists Checkout folders
         if: ${{ env.VERBOSE == 'true' }}
         run: |
-          echo ">>>>> Folder: ./." && ls -al ./.
+          echo ">>>>> Folder: ./."
+          ls -al ./.
           [ -d "./application" ] && echo ">>>>> Folder: application" && ls -al ./application
           [ -d "./.github/actions" ] && echo ">>>>> Folder: ./.github/actions" && ls -al ./.github/actions
           echo ">>>>> Versions: "
