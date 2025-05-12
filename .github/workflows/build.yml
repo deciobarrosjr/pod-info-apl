@@ -126,7 +126,7 @@ jobs:
 
   Build-pod-info-apl:
     runs-on: ubuntu-latest
-    name: pod-info-apl - Setup/Build Python.
+    name: Setup/Build.
     needs: Setup
     steps:
 
@@ -143,16 +143,17 @@ jobs:
       if: ${{ env.VERBOSE == 'true' }}
       run: |
         ls -al ./.
+        ls -al ./application
 
     # UPLOAD THE FILES TO CREATE THE DOCKER IMAGE
 
-    - name: Upload the pod-info-apl files to create the Docker image later
-      uses: actions/upload-artifact@v4
-      with:
-        name: pod-info-apl-build
-        path: |
-          app.py
-          Dockerfile
+#    - name: Upload the pod-info-apl files to create the Docker image later
+##      uses: actions/upload-artifact@v4
+#      with:
+#        name: pod-info-apl-build
+#        path: |
+#          app.py
+#          Dockerfile
 
 
 
@@ -183,7 +184,7 @@ jobs:
       - name: Download pod-info-apl
         uses: actions/download-artifact@v4
         with:
-          name: pod-info-apl-build
+          name: pod-info-apl
           path: |
             ./application 
             versions.yml
