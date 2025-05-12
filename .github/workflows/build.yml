@@ -1,7 +1,7 @@
 name: "CI Build"
 permissions:
   contents: read
-  packages: read
+  packages: write
 on:
   workflow_dispatch:
     inputs:
