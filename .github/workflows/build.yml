@@ -15,6 +15,7 @@ env:
   # GENERAL ENVIRONMENT VARIABLES
 
   APL_DOCKER_IMAGE_NAME: 'pod-info-apl'
+  APL_PROJECT_NAME: 'pod-info-apl'
   VERBOSE: ${{ github.event.inputs.VERBOSE }}
   HELM_FOLDER: './helm-chart'
 
@@ -128,7 +129,7 @@ jobs:
         with:
           context: ./application
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/${{ env.APL_DOCKER_IMAGE_NAME }}:${{ steps.apl-get-app-version.outputs.version }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ ENV.APL_PROJECT_NAME }}/${{ env.APL_DOCKER_IMAGE_NAME }}:${{ steps.apl-get-app-version.outputs.version }}
 
       # VERBOSE - LISTS THE THE DOCKER LOCAL IMAGES CREATED  
 
