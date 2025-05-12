@@ -49,7 +49,6 @@ jobs:
   Build-Push-Image:
     runs-on: ubuntu-latest  
     name: Build and pushes image.
-    needs: Setup  
 
     steps:
 
