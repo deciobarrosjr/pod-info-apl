@@ -250,7 +250,6 @@ jobs:
   AWS-Helm-Chart-Build-Push-Pckg:
     runs-on: ubuntu-latest  
     name: AWS - Helm Build and push.
-    needs: [AWS-Build-Push-Image]
     if: ${{ 1 == 0 }}
     steps:
 
