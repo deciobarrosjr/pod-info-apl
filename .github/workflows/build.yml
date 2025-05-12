@@ -85,12 +85,6 @@ jobs:
       
           echo ">>>>> Cheking End."
 
-      - name: Upload pod-info-apl
-        uses: actions/upload-artifact@v4
-        with:
-          name: pod-info-apl
-          path: application/
-
       # GET THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
 
       - name: pod-info-apl - Get the Current App version
@@ -111,12 +105,11 @@ jobs:
 
       # UPLOADS THE VERSION.YML TO BE USED ON THE NEXT JOBS
 
-      - name: Upload App Version 
+      - name: Upload pod-info-apl
         uses: actions/upload-artifact@v4
         with:
-          name: app-versions
-          path: |
-            versions.yml
+          name: pod-info-apl
+          path: application/
 
       - name: Listing the current operations versions
         run: |
