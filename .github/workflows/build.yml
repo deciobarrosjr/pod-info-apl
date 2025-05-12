@@ -1,4 +1,4 @@
-name: "pod_info_apl CI Build"
+name: "CI Build"
 permissions:
   contents: read
   packages: read
