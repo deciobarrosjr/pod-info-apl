@@ -1,0 +1,17 @@
+# Default values for my-apl-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+AppImage: $APP_IMAGE
+replicaCount: 1
+AplName: $APL_NAME
+svcType: $SVC_TYPE
+containerPort: $CONTAINER_PORT
+Port: $PORT
+NodePort: 30000
+deployment:
+  env:
+    - name: HELLO_SVC_TYPE
+      value: $HELLO_SVC_TYPE
+service:
+  AlbScheme: $ALB_SCHEME

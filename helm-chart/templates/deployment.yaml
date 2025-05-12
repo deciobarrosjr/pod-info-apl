@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.AplName }}
+  annotations:
+    releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "America/Sao_Paulo" | quote }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.AplName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.AplName }}
+    spec:
+      containers:
+      - image: {{ .Values.AppImage }}
+        imagePullPolicy: Always
+        name: {{ .Values.AplName }}
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+        env:
+          {{- range .Values.deployment.env }}
+          - name: {{ .name }}
+            value: {{ .value }}
+          {{- end }}

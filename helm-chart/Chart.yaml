@@ -1,0 +1,14 @@
+apiVersion: v2
+name: my-apl
+description: A Helm chart for a local project
+type: application
+version: 1.0.3
+appVersion: 1.0.3
+
+keywords:
+  - local
+  - helm
+  - chart
+maintainers:
+  - name: Decio de Barros Junior
+    email: deciobarrosjr@yahoo.com.br

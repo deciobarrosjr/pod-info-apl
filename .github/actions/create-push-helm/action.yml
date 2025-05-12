@@ -1,0 +1,225 @@
+name: 'Create a Helm Package and push to the specified cloud provider'
+description: 'Create a Helm Package and push to the specified cloud provider registry.'
+inputs:
+  cloud_name:
+    description: 'The name of the cloud provider (AWS, GCP, or Azure).'
+    required: true
+    default: 'AWS'
+  region:
+    description: 'The AWS, GCP or Azure region/location where the helm will be pushed.'
+    required: true    
+  app_image:
+    description: 'The docker image to be packaged as helm on AWS, GCP, or Azure.'
+    required: true
+    default: ''
+  apl_name:
+    description: 'The application name to be used by helm on AWS, GCP, or Azure.'
+    required: true
+    default: ''
+  container_port:
+    description: 'The application container port on the Pod at AWS, GCP, or Azure.'
+    required: true
+    default: ''
+  port:
+    description: 'The application port that will be exposed by the Pod on AWS, GCP, or Azure.'
+    required: true
+    default: '80'
+  svc_type:
+    description: 'The service type (ClusterIP, NodePort, LoadBalancer) for the application on AWS, GCP, or Azure.'
+    required: true
+    default: 'LoadBalancer'
+  alb_scheme:
+    description: 'The ALB scheme (internet-facing or internal) for the application on AWS, GCP, or Azure.'
+    required: true
+    default: 'internet-facing'
+
+  helm_folder:
+    description: 'The relative path to the helm folder.'
+    required: true
+    default: './helm-chart'
+  values_yml_path:
+    description: 'The relative path to the Helm chart values.yaml file.'
+    required: true
+    default: './helm-chart/values.yaml'
+  values_yml_path_envsubst:
+    description: 'The relative path to the Helm chart values-envsubst.yaml file.'
+    required: true
+    default: './helm-chart/values-envsubst.yaml'
+  values_chart_path:
+    description: 'The relative path to the Helm chart Chart.yaml file.'
+    required: true
+    default: './helm-chart/Chart.yaml'
+
+  aws_access_key_id:
+    description: 'The AWS access key ID.'
+    required: false
+  aws_secret_access_key:
+    description: 'The AWS secret access key (required only for AWS).'
+    required: false
+  google_credentials:
+    description: 'The Google Cloud credentials (required only for GCP).'
+    required: false
+  azure_credentials:
+    description: 'The Azure credentials (required only for Azure).'
+    required: false
+  image_repository:
+    description: 'The repository to where the Helm Package should be pushed.'
+    required: true
+    default: ''
+  verbose:
+    description: 'Verbose mode for debugging purposes.'
+    required: false
+    default: 'false'
+
+
+runs:
+  using: 'composite'
+  steps:
+
+
+  ############################################################################################################
+  #                                            CLOUD AUTHENTICATION                                          #
+  ############################################################################################################ 
+
+  # AWS - CONFIGURE THE CREDENTIALS
+
+    - name: Configure AWS Credentials     
+      uses: aws-actions/configure-aws-credentials@v4
+      if: ${{ inputs.cloud_name == 'AWS' }}
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.region }}
+
+  # GCP - CONFIGURE THE CREDENTIALS
+
+    - name: Configure GCP Credentials   
+      if: ${{ inputs.cloud_name == 'GCP' }}         
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ inputs.google_credentials }}
+
+    # Azure - CONFIGURE THE CREDENTIALS
+
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      if: ${{ inputs.cloud_name == 'Azure' }}
+      with:
+        creds: ${{ inputs.azure_credentials }}
+        enable-azpssession: true
+
+  ############################################################################################################
+  #                                         REGISTRY AUTHENTICATION                                          #
+  ############################################################################################################ 
+      
+  # GCP GAR - LOGIN TO THE REGISTRY
+
+    - name: Login to GAR
+      if: ${{ inputs.cloud_name == 'GCP' }} 
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.region }}-docker.pkg.dev
+        username: _json_key
+        password: ${{ inputs.google_credentials }} 
+
+
+  ############################################################################################################
+  #                                            HELM  AUTHENTICATION                                          #
+  ############################################################################################################ 
+      
+    # GCP GAR - HELM LOGIN TO THE REGISTRY
+
+    - name: Login to Helm Registry
+      shell: bash
+      if: ${{ inputs.cloud_name == 'GCP' }} 
+      run: |
+        helm registry login ${{ inputs.region }}-docker.pkg.dev \
+        --username oauth2accesstoken \
+        --password $(gcloud auth print-access-token)          
+
+
+  ############################################################################################################
+  #                                          HELM CHART CUSTOMIZATION                                        #
+  ############################################################################################################ 
+
+    # GCP - CUSTOMIZING THE HELM CHART TEMPLATE USING THE ENVSUBST TOOL
+      
+    - name: GCP - Customizing the Helm chart template
+      shell: bash
+      if: ${{ inputs.cloud_name == 'GCP' }}    
+      run: |
+        cp ${{ inputs.values_yml_path_envsubst }} ${{ inputs.values_yml_path }}.orig
+        envsubst < ${{ inputs.values_yml_path }}.orig > ${{ inputs.values_yml_path }}
+      env:
+        APP_IMAGE: ${{ inputs.app_image }}
+        APL_NAME: ${{ inputs.apl_name }}
+        CONTAINER_PORT: ${{ inputs.container_port }}
+        PORT: ${{ inputs.port }}
+        HELLO_SVC_TYPE: ${{ inputs.svc_type }}
+        ALB_SCHEME: ${{ inputs.alb_scheme }}
+
+
+  ############################################################################################################
+  #                                           HELM CHART LINT AND PACKAGE                                    #
+  ############################################################################################################ 
+
+    # VERBOSE - LISTS THE THE HELM CHART values.yml FILE 
+
+    - name: VERBOSE - Lists the Helm chart values.yml contents
+      shell: bash
+      if: ${{ inputs.verbose == 'true' }}
+      run: |      
+        echo ">>>>> File: ${{ inputs.values_yml_path }}"
+        cat ${{ inputs.values_yml_path }}
+
+    # GCP - LINTING THE HELM CHART
+
+    - name: Executes the chart lint
+      shell: bash    
+      run: |
+        helm lint "${{ inputs.helm_folder }}"  
+
+    # GCP - PACKAGING THE HELM CHART ADDITION
+
+    - name: Package the Helm Chart
+      shell: bash     
+      run: |
+        helm package "${{ inputs.helm_folder }}"
+
+    # VERBOSE - LIST THE HELM PACKAGE CREATED 
+
+    - name: VERBOSE - List the Helm package created
+      shell: bash        
+      if: ${{ env.VERBOSE == 'true' }}
+      run: |     
+        pwd
+        ls -al ./*.tgz 
+
+
+  ############################################################################################################
+  #                                 PUSH THE HELM PACKAGE TO THE CLOUD REGISTRY                              #
+  ############################################################################################################ 
+
+    # GCP - UPLOAD THE HELM CHART TO THE GCP REGISTRY
+
+    - name: GCP - Push the Helm Package to the GAR Registry
+      shell: bash
+      if: ${{ inputs.cloud_name == 'GCP' }}    
+      run: |
+        APL_NAME=$(yq eval '.name' ${{ inputs.values_chart_path }})
+        APL_VERSION=$(yq eval '.appVersion' ${{ inputs.values_chart_path }})
+
+        if [ "${{ inputs.verbose }}" == "true" ]; then
+          echo ">>>>> File: ${{ inputs.values_chart_path }}"
+          cat ${{ inputs.values_chart_path }}
+          echo ">>>>> APL_NAME: $APL_NAME"
+          echo ">>>>> APL_VERSION: $APL_VERSION"
+          echo ">>>>> helm push $APL_NAME-$APL_VERSION.tgz ${{ inputs.image_repository }}"
+        fi
+
+        helm push $APL_NAME-$APL_VERSION.tgz ${{ inputs.image_repository }}
+
+
+
+
+

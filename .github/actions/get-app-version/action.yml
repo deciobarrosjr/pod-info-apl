@@ -1,0 +1,327 @@
+name: 'Checking the application version'
+description: 'Checks the application version based on the language informed.'
+inputs:
+  app_folder:
+    description: 'This is the application root folder.'
+    required: true
+  verbose:
+    description: 'Enables verbose logging for easier troubleshooting.'
+    required: false
+    default: "false"
+
+outputs:
+  version:
+    description: "The application version extracted from application based on the language informed."
+    value: ${{ steps.extract-app-version.outputs.version }}
+  error_msg:
+    description: "The message returned during the version recovering. On success will return empty string."
+    value: ${{ steps.extract-app-version.outputs.error_msg }}
+  success_msg:
+    description: "The message returned during the version recovering. On failure will return empty string."
+    value: ${{ steps.extract-app-version.outputs.success_msg }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Getting the current app version
+      id: extract-app-version
+      shell: bash
+      run: |
+
+        #####     BASH FUNCTION RESPONSIBLE FOR PRINTING THE OUTPUTS     #####
+
+        output_func() {
+          echo "version=$1" >> $GITHUB_OUTPUT
+          echo "error_msg=$2" >> $GITHUB_OUTPUT  
+          echo "success_msg=$3" >> $GITHUB_OUTPUT
+
+          ## Print the outputs to the console
+
+          if [[ -n "$2" ]]; then
+            echo "Error: $2"
+          fi
+
+          if [[ -n "$3" ]]; then
+            echo "Success: $3"
+          fi
+        }
+
+        #####     BASH FUNCTION RESPONSIBLE FOR PRINTING THE OUTPUTS     #####
+
+        compose_success_msg() {
+          # Recovering the function parameters
+          success_msg="$2"
+          version="$1"
+          version_file="$3"
+
+          if [[ -n "$success_msg" ]]; then
+            echo "$success_msg Version ($version) successfully extracted from $version_file file." 
+          else
+            echo "Version ($version) successfully extracted from $version_file file." 
+          fi
+        }
+
+
+        #####     CHECK IF THE APP_FOLDER INPUT IS PROVIDED AND EXISTS     #####
+
+        app_folder=${{ inputs.app_folder }}
+        app_folder=$(echo "$app_folder" | sed 's:/*$::')     # Normalize the app_folder path by removing any trailing slashes
+
+        if [ ! -d "$app_folder" ]; then
+          error_msg="The application folder does not exist: $app_folder"
+          version=""
+        fi
+
+
+        #####     INITIALIZE THE CONTROLLING VARIABLES     #####
+
+        method_count=0
+        cnt_saved=0
+        last_method_used=""
+        methods_used=""
+        version=""
+        error_msg=""
+        result=""
+        regex_expression=""
+        success_msg=""
+
+
+        #####     CREATE THE ARRAYS CONTAINING THE IMPLEMENTED METHOD AND THE CORRESPONDING REGEX EXPRESSION     #####
+
+        version_files=("$app_folder/setup.py"
+                       "$app_folder/pyproject.toml"
+                       "$app_folder/*.py"
+                       "$app_folder/package.json"
+                       "$app_folder/version.js"
+                       "$app_folder/*.csproj"
+                       "$app_folder/pom.xml"
+                       "$app_folder/build.gradle")
+        
+        regex_expressions=('version\s*=\s*"\K[^\"]+'
+                           'version\s*=\s*"\K[^\"]+'
+                           '__version__\s*=\s*"\K[^\"]+'
+                           '\"version\"\s*:\s*"\K[^\"]+'
+                           'version\s*:\s*"\K[^\"]+'
+                           '(?<=<Version>).*?(?=</Version>)'
+                           '(?<=<version>).*?(?=</version>)'
+                           "(?<=version = ')[^']+")
+
+
+        #####     IDENTIFY THE LANGUAGE/METHOD USED AND OBTAIN THE REGEX EXPRESSION BASED ON THAT AS WELL THE CONTROLLING VARIABLES     #####
+
+        cnt=0
+
+        for each_version_file in "${version_files[@]}"; do
+
+          if [[ "$each_version_file" == *\** ]]; then
+
+            # Handle wildcard patterns
+
+            if [[ "${{ inputs.verbose }}" == "true" ]]; then
+              echo ">>>>> ($cnt) - Processing Wildcard pattern found in the file name, $each_version_file"
+            fi            
+
+            searching_file=$(find "$app_folder" -name "${each_version_file##*/}" | head -n 1)  # Select the most recently modified file
+
+            if [ -n "$searching_file" ]; then
+              regex_expression="${regex_expressions[$cnt]}"
+              cnt_saved=$cnt
+
+              last_method_used="$each_version_file"
+              methods_used="$methods_used, $last_method_used"
+              method_count=$((method_count + 1))
+            fi
+
+          else
+
+            # Does not have wildcard patterns
+
+            if [[ "${{ inputs.verbose }}" == "true" ]]; then
+              echo ">>>>> ($cnt) - Processing file name, $each_version_file"
+            fi 
+
+            if [[ -f "$each_version_file" ]]; then
+              regex_expression="${regex_expressions[$cnt]}"
+              cnt_saved=$cnt
+
+              last_method_used="$each_version_file"
+              methods_used="$methods_used, $last_method_used"
+              method_count=$((method_count + 1))
+            fi
+          fi
+          
+          cnt=$((cnt + 1))
+
+        done
+
+
+        #####     VERBOSE - PRINTS THE RESULTS OBTAINED FROM THE LAST STEP     #####
+
+        if [[ "${{ inputs.verbose }}" == "true" ]]; then
+     
+          if [[ $method_count -eq 0 ]]; then
+            output_func "" "Error, No version file found in any of the Language/Method implemented on this GithubAction." ""  
+            echo ">>>>> Error, No version file found in any of the Language/Method implemented on this GithubAction."        
+            exit 1              
+          elif [[ $method_count -gt 1 ]]; then 
+            echo ">>>>> Warning, More than one Language/Method was identified. (Number of Method - $method_count, Method Used - $methods_used)"
+          else
+            echo ">>>>> Array index, $cnt_saved"
+            echo ">>>>> Method count, $method_count"
+            echo ">>>>> Method that will be used, $last_method_used"
+            echo ">>>>> Regex expression that will be used, ($regex_expression)"
+          fi
+        fi
+
+             
+        #####     POPULATION THE OUTPUT VARIABLES     #####
+
+        if [[ $method_count -eq 0 ]]; then
+          output_func "" "No version file found in any of the Language/Method implemented on this GithubAction." "" 
+          error_msg=">>>>> No version file found in any of the Language/Method implemented on this GithubAction."         
+          exit 1
+        elif [[ $method_count -gt 1 ]]; then
+          success_msg="Warning, More than one Language/Method was identified. (Number of Method - $method_count, Method Used - $methods_used)"
+          error_msg=""
+        fi
+
+        
+        #####     EXTRACT THE VERSION BASED ON THE LANGUAGE/METHOD USED     #####
+
+        if [[ "$last_method_used" == "$app_folder/*.csproj" ]]; then
+
+          #####     Extract version for .NET C#     #####
+
+          if [[ "${{ inputs.verbose }}" == "true" ]]; then
+            echo ">>>>> Processing Extract version for .NET C#"
+          fi 
+
+          csproj_file=$(find "$app_folder" -name "*.csproj" | head -n 1)
+
+          if [[ -n "$csproj_file" ]]; then
+            version=$(grep -oP "$regex_expression" "$csproj_file" || echo "")
+          else
+            version=""
+          fi
+
+          if [[ -n "$version" ]]; then
+            error_msg=""
+            success_msg=$(compose_success_msg "$version" "$success_msg"  "$csproj_file")
+            output_func "$version" "$error_msg" "$success_msg" 
+            exit 0
+          else 
+            error_msg="Version not found in $csproj_file file using the regex ($regex_expression)."       
+            output_func "" "$error_msg" ""
+            exit 1            
+          fi
+
+        elif [[ "$last_method_used" == "$app_folder/pom.xml" ]]; then
+
+          #####     Extract version for Java pom.xml     #####
+
+          if [[ "${{ inputs.verbose }}" == "true" ]]; then
+            echo ">>>>> Processing Extract version for Java pom.xml"
+          fi 
+
+          # INSTALL THE xmllint TOOL TO EXTRACT JUST THE PROJECT SECTION FROM THE POM.XML FILE
+
+          sudo apt-get install -y libxml2-utils > /dev/null 2>&1
+
+          version=$(xmllint --xpath '/*[local-name()="project"]/*[not(local-name()="properties" or local-name()="dependencies" or local-name()="build" or local-name()="distributionManagement")]' "$app_folder/pom.xml" | grep -oP "$regex_expression" || echo "")
+
+          if [[ -n "$version" ]]; then
+            error_msg=""
+            success_msg=$(compose_success_msg "$version" "$success_msg" "$app_folder/pom.xml")
+            output_func "$version" "$error_msg" "$success_msg" 
+            exit 0            
+          else
+            error_msg="Version not found in pom.xml file."
+            output_func "" "$error_msg" ""
+            exit 1              
+          fi
+
+        elif [[ "$last_method_used" == "$app_folder/build.gradle" ]]; then
+
+          #####     Extract version for Java gradle    #####
+
+          if [[ "${{ inputs.verbose }}" == "true" ]]; then
+            echo ">>>>> Processing Extract version for Java gradle"
+          fi 
+
+          version=$(grep -oP "$regex_expression" "$app_folder/build.gradle")
+
+          if [[ -n "$version" ]]; then
+            error_msg=""
+            success_msg=$(compose_success_msg "$version" "$success_msg" "$app_folder/build.gradle")          
+            output_func "$version" "$error_msg" "$success_msg"
+            exit 0             
+          else
+            error_msg="Version not found in build.gradle file."	
+            output_func "" "$error_msg" ""
+            exit 1              
+          fi
+
+        elif [[ "$last_method_used" == "$app_folder/*.py" ]]; then
+                 
+          ######      Extract version for *.py files     #####
+
+          if [[ "${{ inputs.verbose }}" == "true" ]]; then
+            echo ">>>>> Processing Extract version for *.py files"
+            echo ">>>>> Folder to start searching, $app_folder"            
+          fi 
+
+          find "$app_folder" -name "*.py" -exec grep -oP "$regex_expression" {} \; > ./temp_versions_$$.txt
+          number_of_file=$(cat ./temp_versions_$$.txt | wc -l)
+          version=$(cat ./temp_versions_$$.txt | sort -V | tail -n 1)
+          rm -rf ./temp_versions_$$.txt
+
+          # Search from which py file the version was extracted from
+
+          for each_file in $(find "$app_folder" -name "*.py"); do
+            version_inside_file=$(grep -oP "$regex_expression" "$each_file" || echo "")
+         
+            if [[ "${{ inputs.verbose }}" == "true" ]] && [[ "$version_inside_file" == "$version" ]]; then
+              echo ">>>>> Version found inside the file ($each_file), $version"
+            fi
+          done
+
+          if [[ -n "$version" ]]; then
+            error_msg=""
+
+            if [[ $number_of_file -gt 1 ]]; then
+              success_msg="Warning, More than one Python file found with the __version__ variable inside. Using the one with the highest version number."
+            fi
+
+            success_msg=$(compose_success_msg "$version" "$success_msg" "$app_folder/*.py")          
+            output_func "$version" "$error_msg" "$success_msg"
+            exit 0                             
+          else
+            error_msg="Version not found in *.py file."	
+            output_func "" "$error_msg" ""
+            exit 1             
+          fi
+
+        else
+
+          #####     Extract version for setup.py, pyproject.toml, package.json, version.js    #####
+
+          if [[ "${{ inputs.verbose }}" == "true" ]]; then
+            echo ">>>>> Processing Extract version for setup.py, pyproject.toml, package.json, version.js"
+          fi 
+
+          version=$(grep -oP "$regex_expression" "$last_method_used" || echo "")
+
+          if [[ -n "$version" ]]; then
+            error_msg="" 
+            success_msg=$(compose_success_msg "$version" "$success_msg" "setup.py, pyproject.toml, package.json, version.js")                
+            output_func "$version" "$error_msg" "$success_msg"
+            exit 0              
+          else
+            error_msg="Version not found in setup.py, pyproject.toml, package.json, version.js file."
+            output_func "" "$error_msg" ""
+            exit 1            
+          fi
+
+        fi
+
+

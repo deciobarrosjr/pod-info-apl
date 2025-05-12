@@ -1,0 +1,110 @@
+name: 'Checking .NET Target Framework Version'
+description: 'A custom GitHub Action used to check the .NET Target Framework Version'
+inputs:
+  language:
+    description: 'The language used. Valid values: .net, javascript, java.'
+    required: true
+  file_name:
+    description: 'This is the file name used to recover the application version.'
+    required: true
+  version_full_name:
+    description: 'Recover from the full version name or just the version number. Today i´s only used for .NET, Example: net5.0 or 5.0.'
+    required: false
+    default: "false"
+  verbose:
+    description: 'Creates a more verbose Logs to easy the troubleshooting if necessary.'
+    required: false
+    default: "false"
+
+outputs:
+  target_version:
+    description: "The application version extracted from application based on the language informed."
+    value: ${{ steps.extract-dot-net.outputs.target_version || steps.extract-javascript.outputs.target_version || steps.extract-java.outputs.target_version }}
+  
+runs:
+  using: 'composite'
+  steps:
+    - name: .Net - Extract target framework version
+      if: ${{ inputs.language == '.net' }}
+      id: extract-dot-net
+      shell: bash
+      run: |
+        if [ "${{ inputs.version_full_name }}" == "true" ]; then
+          target_version=$(cat ${{ inputs.file_name }} | grep -oP '<TargetFramework>(.*)</TargetFramework>' | sed 's/<TargetFramework>\(.*\)<\/TargetFramework>/\1/')
+          target_version="${target_version//net/}"
+        else
+          target_version=$(cat ${{ inputs.file_name }} | grep -oP '<TargetFramework>(.*)</TargetFramework>' | sed 's/<TargetFramework>\(.*\)<\/TargetFramework>/\1/')
+        fi
+         
+        echo "target_version=$target_version" >> $GITHUB_OUTPUT
+        echo "Dotnet_Version=$target_version"        
+
+    - name: Javascript - Extract Javascript version from package.json
+      if: ${{ inputs.language == 'javascript' }}
+      id: extract-javascript
+      shell: bash
+      run: |
+        if echo "${{ inputs.file_name }}" | grep -q "package.json"; then
+          target_version=$(cat ${{ inputs.file_name }} | grep -oP '"engines":\s*{[^}]*"node":\s*"\K[^"]+')     
+          echo "target_version=$target_version" >> $GITHUB_OUTPUT
+          echo "Node_Version=$target_version" 
+        fi        
+
+    - name: Java - Extract Java version from pom.xml
+      if: ${{ inputs.language == 'java' }}
+      id: extract-java
+      shell: bash
+      run: |
+        if echo "${{ inputs.file_name }}" | grep -q "pom.xml"; then
+          target_version=$(cat ${{ inputs.file_name }} | grep -oP '<java.version>\K[^<]+')
+          echo "target_version=$target_version" >> $GITHUB_OUTPUT
+          echo "Java_Version=$target_version" 
+        fi 
+
+    - name: Verbose - Lists the version recovered
+      if: ${{ inputs.verbose == 'true' }}
+      shell: bash      
+      run: |
+        echo " "
+        echo "***** Checking current version recovered for this language ******************************"
+        echo " "
+        echo "language: ${{ inputs.language }}"
+        echo "file_name: ${{ inputs.file_name }}"
+
+        # .NET
+
+        if [ "${{ inputs.language }}" == '.net' ]; then
+          if [ "${{ inputs.version_full_name }}" == "true" ]; then
+            echo " "
+            echo "version_full_name: ${{ inputs.version_full_name }}"
+            echo "The full version name recovered from the TargetFramework is: ${{ steps.extract-dot-net.outputs.target_version }}"
+          else
+            echo " "
+            echo "version_full_name: ${{ inputs.version_full_name }}"
+            echo "The version number recovered from the TargetFramework is: ${{ steps.extract-dot-net.outputs.target_version }}"
+          fi
+        fi  
+
+        # Javascript
+
+        if [ "${{ inputs.language }}" == 'javascript' ]; then
+          if echo "${{ inputs.file_name }}" | grep -q "package.json"; then
+            echo " "
+            echo "Package manager: NPM (Node Package Manager)"
+            echo "The javascript version recovered is: ${{ steps.extract-javascript.outputs.target_version }}"
+          fi
+        fi 
+
+        # Java
+
+        if [ "${{ inputs.language }}" == 'java' ]; then
+          if echo "${{ inputs.file_name }}" | grep -q "pom.xml"; then
+            echo " "
+            echo "Package manager: Maven POM (Project Object Model)"
+            echo "The Java version recovered is: ${{ steps.extract-java.outputs.target_version }}"
+          fi
+        fi 
+
+        echo " "
+        echo "*****************************************************************************************"
+        echo " "

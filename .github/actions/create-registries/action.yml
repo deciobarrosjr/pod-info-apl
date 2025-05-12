@@ -1,0 +1,210 @@
+name: 'Creating the list of registries on the specified cloud provider.'
+description: 'A custom GitHub Action used to create a registry on the specified cloud provider.'
+inputs:
+  cloud_name:
+    description: 'The name of the cloud provider (AWS, GCP, or Azure).'
+    required: true
+    default: 'AWS'
+  registries_list:
+    description: 'The list of registry names to be created on AWS, GCP, or Azure.'
+    required: true
+    default: 'my-registry'
+  region:
+    description: 'The AWS, GCP or Azure region/location where the registry will be created.'
+    required: true
+    default: 'sa-east-1'
+  project_id:
+    description: 'The GCP project ID where the registry will be created.'
+    required: false
+  aws_access_key_id:
+    description: 'The AWS access key ID.'
+    required: false
+  aws_secret_access_key:
+    description: 'The AWS secret access key.'
+    required: false
+  google_credentials:
+    description: 'The Google Cloud credentials.'
+    required: false
+  azure_credentials:
+    description: 'The Azure credentials.'
+    required: false
+  resource_group:
+    description: 'The Azure resource group.'
+    required: false
+  description:
+    description: 'The description of the registry (used only by some cloud providers).'
+    required: false
+  verbose:
+    description: 'Verbode mode for debugging purposes.'
+    required: false
+    default: false
+ 
+runs:
+  using: 'composite'
+  steps:
+
+  ############################################################################################################
+  #                                            CLOUD AUTHENTICATION                                         #
+  ############################################################################################################ 
+
+    # AWS - CONFIGURE THE CREDENTIALS
+
+    - name: Configure AWS Credentials     
+      uses: aws-actions/configure-aws-credentials@v4
+      if: ${{ inputs.cloud_name == 'AWS' }}
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.region }}
+
+    # GCP - CONFIGURE THE CREDENTIALS
+
+    - name: Configure GCP Credentials   
+      if: ${{ inputs.cloud_name == 'GCP' }}         
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ inputs.google_credentials }}
+
+    # Azure - CONFIGURE THE CREDENTIALS
+
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      if: ${{ inputs.cloud_name == 'Azure' }}
+      with:
+        creds: ${{ inputs.azure_credentials }}
+        enable-azpssession: true
+
+
+    ############################################################################################################
+    #                                            REGISTRY CREATION                                             #
+    ############################################################################################################         
+
+   # AWS - CREATE THE ARTIFACT REGISTRIES
+
+    - name: Creating the ECR registries.
+      if: ${{ inputs.cloud_name == 'AWS' }}       
+      shell: bash
+      run: |
+
+        #####     LOOP ON THE REGISTRIES LIST     #####
+
+        echo "${{ inputs.registries_list }}" | tr ' ' '\n' | while read -r registry_name; do
+
+          if [ -z "${registry_name}" ]; then 
+            continue   
+          fi
+
+          registry_exists=$(aws ecr describe-repositories --region ${{ inputs.region }} --output text --query "repositories[?repositoryName=='$registry_name']" 2>/dev/null)
+
+           if [ -z "$registry_exists" ]; then 
+
+             echo "Creating repository $registry_name..."
+
+             if [ "${{ inputs.verbose }}" == "true" ]; then
+               registry_ID=$(aws ecr create-repository \
+                 --repository-name $registry_name \
+                 --region ${{ inputs.region }} \
+                 --query "repository.registryId" \
+                 --output text)
+             else
+               registry_ID=$(aws ecr create-repository \
+                 --repository-name $registry_name \
+                 --region ${{ inputs.region }} \
+                 --query "repository.registryId" \
+                 --output text \
+                 --no-cli-pager 2>/dev/null)            
+             fi
+
+             echo "Repository $registry_name created and received the RegistryID= $registry_ID ..."
+           else
+             echo "Repository $registry_name already exists..."
+           fi
+
+        done   
+  
+
+   # GCP - CREATE THE ARTIFACT REGISTRIES
+
+    - name: Creating the GAR registries
+      if: ${{ inputs.cloud_name == 'GCP' }}
+      shell: bash
+      run: |
+
+        #####     LOOP ON THE REGISTRIES LIST     #####
+
+        echo "${{ inputs.registries_list }}" | tr ' ' '\n' | while read -r registry_name; do
+
+          if [ -z "${registry_name}" ]; then 
+            continue   
+          fi
+
+          registry_exists=$(gcloud artifacts repositories list --filter="name:$registry_name" --format="value(name)" 2>/dev/null)
+
+          if [ -z "${registry_exists}" ]; then 
+
+            echo "Creating repository $registry_name..."
+
+            if [ "${{ inputs.verbose }}" == "true" ]; then
+              gcloud artifacts repositories create $registry_name \
+                --repository-format=docker \
+                --location=${{ inputs.region }} \
+                --description="${{ inputs.description }}"
+            else
+              gcloud artifacts repositories create $registry_name \
+                --repository-format=docker \
+                --location=${{ inputs.region }} \
+                --description="${{ inputs.description }}" \
+                --quiet 2>/dev/null            
+            fi
+
+            echo "Repository $registry_name created..."
+          else
+            echo "Repository $registry_name already exists..."
+          fi          
+
+        done     
+
+
+   # Azure - CREATE THE ARTIFACT REGISTRIES
+
+    - name: Creating the ACR registries
+      if: ${{ inputs.cloud_name == 'Azure' }}
+      shell: bash
+      run: |
+
+        #####     LOOP ON THE REGISTRIES LIST     #####
+
+        echo "${{ inputs.registries_list }}" | tr ' ' '\n' | while read -r registry_name; do
+
+          if [ -z "${registry_name}" ]; then 
+            continue   
+          fi
+          
+          azure_registry_name=$(echo "$registry_name" | sed 's/\.azurecr\.io//')       
+
+          registry_exists=$(az acr list --resource-group "${{ inputs.resource_group }}" --query "[?name=='$azure_registry_name'].name" --output tsv)
+        
+          if [ -z "${registry_exists}" ]; then 
+    
+            echo "Creating repository $azure_registry_name..."
+
+            if [ "${{ inputs.verbose }}" == "true" ]; then
+              az acr create --resource-group ${{ inputs.resource_group }} \
+                --name $azure_registry_name \
+                --sku Basic \
+                --location ${{ inputs.region }}
+            else
+              az acr create --resource-group ${{ inputs.resource_group }} \
+                --name $azure_registry_name \
+                --sku Basic \
+                --location ${{ inputs.region }} \
+                --only-show-errors \
+                --output none
+            fi   
+    
+            echo "Repository $azure_registry_name created..."
+          else
+            echo "Repository $azure_registry_name already exists..."
+          fi           
+
+        done         

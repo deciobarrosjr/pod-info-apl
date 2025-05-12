@@ -1,0 +1,132 @@
+name: "CI Destroy"
+
+on:
+  workflow_dispatch:
+    inputs:
+      VERBOSE:
+        description: 'Verbose mode'
+        required: true
+        default: false 
+        type: boolean 
+
+env:
+  # GENERAL ENVIRONMENT VARIABLES
+
+  CLOUD_NAME: ${{ vars.CLOUD_NAME }}
+  PREFIX_NAME: ${{ vars.PREFIX_NAME }}
+  VERBOSE: ${{ github.event.inputs.VERBOSE }}
+  ADD_SUFFIX_NAME: ${{ vars.ADD_SUFFIX_NAME }}
+  SUB_SUFFIX_NAME: ${{ vars.SUB_SUFFIX_NAME }}
+
+  # AWS ENVIRONMENT VARIABLES
+
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ADDITION_DOCKER_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-image/${{ vars.ADD_SUFFIX_NAME }} 
+  AWS_ADDITION_DOCKER_IMAGE_NAME: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.PREFIX_NAME }}-image/${{ vars.ADD_SUFFIX_NAME }}:latest 
+  AWS_SUBTRACTION_DOCKER_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-image/${{ vars.SUB_SUFFIX_NAME }} 
+  AWS_SUBTRACTION_DOCKER_IMAGE_NAME: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.PREFIX_NAME }}-image/${{ vars.SUB_SUFFIX_NAME }}:latest 
+  AWS_DIVISION_DOCKER_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-image/${{ vars.DIV_SUFFIX_NAME }} 
+  AWS_DIVISION_DOCKER_IMAGE_NAME: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.PREFIX_NAME }}-image/${{ vars.DIV_SUFFIX_NAME }}:latest 
+  AWS_MULTIPLICATION_DOCKER_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-image/${{ vars.MUL_SUFFIX_NAME }} 
+  AWS_MULTIPLICATION_DOCKER_IMAGE_NAME: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.PREFIX_NAME }}-image/${{ vars.MUL_SUFFIX_NAME }}:latest 
+  AWS_ADDITION_HELM_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-helm/${{ vars.ADD_SUFFIX_NAME }}
+  AWS_SUBTRACTION_HELM_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-helm/${{ vars.SUB_SUFFIX_NAME }}
+  AWS_DIVISION_HELM_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-helm/${{ vars.DIV_SUFFIX_NAME }}
+  AWS_MULTIPLICATION_HELM_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-helm/${{ vars.MUL_SUFFIX_NAME }}
+
+  # GCP ENVIRONMENT VARIABLES
+
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_GAR_DESCRIPTION: "Docker images for the Calculator Operations"
+  GCP_DOCKER_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-image 
+  GCP_ADDITION_DOCKER_IMAGE_NAME: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.PREFIX_NAME }}-image/${{ vars.ADD_SUFFIX_NAME }}:latest
+  GCP_SUBTRACTION_DOCKER_IMAGE_NAME: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.PREFIX_NAME }}-image/${{ vars.SUB_SUFFIX_NAME }}:latest
+  GCP_DIVISION_DOCKER_IMAGE_NAME: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.PREFIX_NAME }}-image/${{ vars.DIV_SUFFIX_NAME }}:latest
+  GCP_MULTIPLICATION_DOCKER_IMAGE_NAME: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.PREFIX_NAME }}-image/${{ vars.MUL_SUFFIX_NAME }}:latest
+  GCP_HELM_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}-helm 
+
+  # AZURE ENVIRONMENT VARIABLES
+   
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  AZURE_REGION: ${{ vars.AZURE_REGION }}
+  AZURE_DOCKER_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}image.azurecr.io
+  AZURE_ADDITION_DOCKER_IMAGE_NAME: ${{ vars.PREFIX_NAME }}image.azurecr.io/${{ vars.ADD_SUFFIX_NAME }}:latest 
+  AZURE_SUBTRACTION_DOCKER_IMAGE_NAME: ${{ vars.PREFIX_NAME }}image.azurecr.io/${{ vars.SUB_SUFFIX_NAME }}:latest   
+  AZURE_DIVISION_DOCKER_IMAGE_NAME: ${{ vars.PREFIX_NAME }}image.azurecr.io/${{ vars.DIV_SUFFIX_NAME }}:latest    
+  AZURE_MULTIPLICATION_DOCKER_IMAGE_NAME: ${{ vars.PREFIX_NAME }}image.azurecr.io/${{ vars.MUL_SUFFIX_NAME }}:latest  
+  AZURE_HELM_REGISTRY_NAME: ${{ vars.PREFIX_NAME }}helm.azurecr.io 
+
+
+jobs:
+  Destroy-Registries:
+    runs-on: ubuntu-latest
+    name: Destroying the registries.
+    steps:
+
+    # ACTIONS - CHECKOUT THE LOCAL GITHUB ACTIONS
+
+    - name: Download actions
+      uses: actions/checkout@v4
+      with:
+        show-progress: ${{ env.VERBOSE }}
+        path: ./. 
+        fetch-depth: 1
+        sparse-checkout: |
+          .github 
+
+    # AWS - DESTROY ALL DOCKER/HELM REGISTRY PER OPERATION (ADDITION, SUBTRACTION, DIVISION, MULTIPLICATION)
+
+    - name: AWS - Destroy the registries.
+      uses: ./.github/actions/destroy-registries
+      id: aws-destroy-registries
+      if: ${{ vars.CLOUD_NAME == 'AWS' }}
+      with:
+        cloud_name: 'AWS'
+        region: ${{ env.AWS_REGION }}
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        registries_list:
+          ${{ env.AWS_ADDITION_DOCKER_REGISTRY_NAME }}
+          ${{ env.AWS_SUBTRACTION_DOCKER_REGISTRY_NAME }}
+          ${{ env.AWS_DIVISION_DOCKER_REGISTRY_NAME }}
+          ${{ env.AWS_MULTIPLICATION_DOCKER_REGISTRY_NAME }}
+          ${{ env.AWS_ADDITION_HELM_REGISTRY_NAME }}
+          ${{ env.AWS_SUBTRACTION_HELM_REGISTRY_NAME }}
+          ${{ env.AWS_DIVISION_HELM_REGISTRY_NAME }}
+          ${{ env.AWS_MULTIPLICATION_HELM_REGISTRY_NAME }}
+        verbose: ${{ env.VERBOSE }}
+        
+
+    # GCP - DESTROY ALL DOCKER/HELM REGISTRY
+
+    - name: GCP - Destroy the registries.
+      uses: ./.github/actions/destroy-registries
+      id: gcp-destroy-registries
+      if: ${{ vars.CLOUD_NAME == 'GCP' }}
+      with:
+        cloud_name: 'GCP'
+        region: ${{ env.GCP_REGION }}
+        project_id: ${{ env.GCP_PROJECT_ID }}
+        registries_list: |
+          ${{ env.GCP_DOCKER_REGISTRY_NAME }}
+          ${{ env.GCP_HELM_REGISTRY_NAME }}
+        google_credentials: ${{ secrets.GOOGLE_CREDENTIALS }}
+        verbose: ${{ env.VERBOSE }}
+
+    # Azure - CREATES THE REGISTRY
+
+    - name: Azure - Destroy the registries.
+      uses: ./.github/actions/destroy-registries
+      id: azure-create-registry
+      if: ${{ vars.CLOUD_NAME == 'Azure' }}
+      with:
+        cloud_name: 'Azure'
+        resource_group: ${{ env.AZURE_RESOURCE_GROUP }}
+        region: ${{ env.AZURE_REGION }}
+        registries_list: |
+          ${{ env.AZURE_DOCKER_REGISTRY_NAME }}
+          ${{ env.AZURE_HELM_REGISTRY_NAME }}
+        azure_credentials: ${{ secrets.AZURE_CREDENTIALS }} 
+        verbose: ${{ env.VERBOSE }}               

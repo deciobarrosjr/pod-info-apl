@@ -1,0 +1,312 @@
+name: "pod_info_apl CI Build"
+permissions:
+  contents: read
+  packages: read
+on:
+  workflow_dispatch:
+    inputs:
+      VERBOSE:
+        description: 'Verbose mode'
+        required: true
+        default: false 
+        type: boolean 
+
+env:
+  # GENERAL ENVIRONMENT VARIABLES
+
+  APL_DOCKER_IMAGE_NAME: 'pod-info-apl'
+  VERBOSE: ${{ github.event.inputs.VERBOSE }}
+  HELM_FOLDER: './helm-chart'
+
+  VALUES_YML_FULL_PATH: './helm-chart/values.yaml'
+  VALUES_YML_FULL_PATH_ENVSUBST: './helm-chart/values-envsubst.yaml'
+  VALUES_CHART_FULL_PATH: './helm-chart/Chart.yaml'
+
+
+  # HELM CHART CUSTOMIZATION VARIABLES
+
+  SVCTYPE_ADD: ${{ vars.SVCTYPE_ADD }}
+  SVCTYPE_SUB: ${{ vars.SVCTYPE_SUB }}
+  SVCTYPE_DIV: ${{ vars.SVCTYPE_DIV }}
+  SVCTYPE_MUL: ${{ vars.SVCTYPE_MUL }}
+
+  CONTAINER_PORT_ADD: ${{ vars.CONTAINER_PORT_ADD }}
+  CONTAINER_PORT_SUB: ${{ vars.CONTAINER_PORT_SUB }}
+  CONTAINER_PORT_DIV: ${{ vars.CONTAINER_PORT_DIV }}
+  CONTAINER_PORT_MUL: ${{ vars.CONTAINER_PORT_MUL }}
+
+  PORT_ADD: ${{ vars.PORT_ADD }}
+  PORT_SUB: ${{ vars.PORT_SUB }}
+  PORT_DIV: ${{ vars.PORT_DIV }}
+  PORT_MUL: ${{ vars.PORT_MUL }}
+ 
+
+jobs:
+  Setup:
+    runs-on: ubuntu-latest
+    name: Checkout/Upload pod-info-apl.
+    steps:
+
+      # ACTIONS - CHECKOUT THE LOCAL GITHUB ACTIONS
+
+      - name: Download actions
+        uses: actions/checkout@v4
+        with:
+          show-progress: ${{ env.VERBOSE }}
+          path: ./. 
+          fetch-depth: 1
+          sparse-checkout: |
+            .github 
+
+      # CHECKOUT THE REPOSITORY
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          show-progress: ${{ env.VERBOSE }} 
+
+      # OUTPUTS THE CURRENT INSTALLED VERSIONS WHEN THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
+
+      - name: VERBOSE (Setup) - Checking current installed versions and folders
+        if: ${{ env.VERBOSE == 'true' }}
+        run: |
+          echo ">>>>> Checking the local repository ..."   
+          ls -al      
+          echo " "
+
+          echo ">>>>> Checking tools versions installed on the environment ..."        
+          echo " "
+      
+          for cmd in "python3 --version" "pip3 --version" "tar --version" "docker --version" "helm version" "dotnet --list-runtimes" "yq --version" "envsubst --version"; do
+            echo "> $cmd"
+            $cmd
+            echo " "
+          done
+      
+          echo ">>>>> Cheking End."
+
+      - name: Upload pod-info-apl
+        uses: actions/upload-artifact@v4
+        with:
+          name: pod-info-apl
+          path: application/
+
+      # GET THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
+
+      - name: pod-info-apl - Get the Current App version
+        uses: ./.github/actions/get-app-version
+        id: apl-get-app-version
+        with:
+          app_folder: "./application"
+          verbose: ${{ env.VERBOSE }}
+
+      # CREATES A FILE versions.yml WITH THE VERSION NUMBER OF THE APPLICATION
+
+      - name: Create versions.yml
+        id: create-versions-yml
+        run: |
+          rm -rf versions.yml; touch versions.yml
+          echo "pod-info-apl_version: ${{ steps.apl-get-app-version.outputs.version }}" >> versions.yml
+
+
+      # UPLOADS THE VERSION.YML TO BE USED ON THE NEXT JOBS
+
+      - name: Upload App Version 
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-versions
+          path: |
+            versions.yml
+
+      - name: Listing the current operations versions
+        run: |
+          echo ">>>>> Listing the version found for each operation."
+          cat versions.yml
+          echo ""
+
+
+  ############################################################################################################
+  #                                                PREPARING FOR BUILD                                       #
+  ############################################################################################################
+
+  Build-pod-info-apl:
+    runs-on: ubuntu-latest
+    name: pod-info-apl - Setup/Build Python.
+    needs: Setup
+    steps:
+
+    # CHECKOUT THE FILES TO CREATE THE DOCKER IMAGE
+
+    - name: Download pod-info-apl
+      uses: actions/download-artifact@v4
+      with:        
+        name: apl-get-app-version
+
+    # VERBOSE - LISTS THE CHECKOUT FOLDERS IF THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
+
+    - name: Verbose - Lists Checkout folders
+      if: ${{ env.VERBOSE == 'true' }}
+      run: |
+        ls -al ./.
+
+    # UPLOAD THE FILES TO CREATE THE DOCKER IMAGE
+
+    - name: Upload the pod-info-apl files to create the Docker image later
+      uses: actions/upload-artifact@v4
+      with:
+        name: pod-info-apl-build
+        path: |
+          app.py
+          Dockerfile
+
+
+
+  ############################################################################################################
+  #                                         BUILD & PUSH DOCKER IMAGE                                        #
+  ############################################################################################################
+      
+  Build-Push-Image:
+    runs-on: ubuntu-latest  
+    name: Build and pushes image.
+    needs: Build-pod-info-apl  
+
+    steps:
+
+      # CHECKOUT THE LOCAL GITHUB ACTIONS 
+
+      - name: Download actions
+        uses: actions/checkout@v4
+        with:
+          show-progress: ${{ env.VERBOSE }}          
+          path: ./. 
+          fetch-depth: 1
+          sparse-checkout: |
+            .github  
+
+      # CHECKOUT THE FILES TO CREATE THE DOCKER IMAGES
+        
+      - name: Download pod-info-apl
+        uses: actions/download-artifact@v4
+        with:
+          name: pod-info-apl-build
+          path: ./application 
+
+
+      # VERBOSE - LISTS THE CHECKOUT FOLDERS IF THE VERBOSE ENVIRONMENT VARIABLE IS SET TO TRUE
+
+      - name: Verbose - Lists Checkout folders
+        if: ${{ env.VERBOSE == 'true' }}
+        run: |
+          echo ">>>>> Folder: ./." && ls -al ./.
+          [ -d "./application" ] && echo ">>>>> Folder: application" && ls -al ./application
+          [ -d "./.github/actions" ] && echo ">>>>> Folder: ./.github/actions" && ls -al ./.github/actions
+
+      # RECOVER THE APP VERSION
+
+      - name: Get the Current App version
+        run: |
+          cur_apl_version=$(yq '.pod-info-apl_version' 'versions.yml')
+          echo "cur_apl_version=${cur_apl_version}" >> $GITHUB_ENV
+
+      # CREATING THE DOCKER FOLDER TO COPY THE BINARIES AND DOCKERFILE TO IT
+
+      - name:  Creating a Docker Folder 
+        env:
+          DOCKER_FOLDER: "Docker_Files_Apl"
+          SOURCE_FOLDER: "application"
+        run: |
+          mkdir -p ./$SOURCE_FOLDER/$DOCKER_FOLDER
+          cp ./$SOURCE_FOLDER/requirements.txt ./$SOURCE_FOLDER/$DOCKER_FOLDER/
+          cp ./$SOURCE_FOLDER/Dockerfile ./$SOURCE_FOLDER/$DOCKER_FOLDER/
+          cp ./$SOURCE_FOLDER/app.py ./$SOURCE_FOLDER/$DOCKER_FOLDER/
+
+          if [ "${{ env.VERBOSE }}" == "true" ]; then
+            [ -d "./$SOURCE_FOLDER/$DOCKER_FOLDER" ] && ls -al ./$SOURCE_FOLDER/$DOCKER_FOLDER
+          fi
+
+      # CREATING THE DOCKER IMAGE AND PUSHING IT TO THE REGISTRY
+
+      - name: Build and push Docker image to GitHub Container Registry
+        uses: docker/build-push-action@v6
+        with:
+          context: ./application
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.APL_DOCKER_IMAGE_NAME }}:${{ env.cur_apl_version }}
+
+      # VERBOSE - LISTS THE THE DOCKER LOCAL IMAGES CREATED  
+
+      - name: Verbose - Lists the Docker images created
+        if: ${{ env.VERBOSE == 'true' }}
+        run: |
+          docker images
+
+
+
+  ############################################################################################################
+  #                                          HELM CHART BUILD AND PUSH                                       #
+  ############################################################################################################           
+
+
+  AWS-Helm-Chart-Build-Push-Pckg:
+    runs-on: ubuntu-latest  
+    name: AWS - Helm Build and push.
+    needs: [AWS-Build-Push-Image]
+    if: ${{ 1 == 0 }}
+    steps:
+
+      # helm-chart - CHECKOUT THE HELM CHART TEMPLATE
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          show-progress: ${{ env.VERBOSE }}       
+          path: ./. 
+          fetch-depth: 1
+          sparse-checkout: |
+            helm-chart/          
+
+      # AWS - VERBOSE - LISTS THE THE HELM CHART TEMPLATE FOLDER 
+
+      - name: VERBOSE (AWS) - Lists the Helm chart template folder
+        if: ${{ env.VERBOSE == 'true' }}
+        run: |
+          ls -al ./. 
+          ls -Rl ./helm-chart
+          cat ./helm-chart/values-envsubst.yaml
+
+      # AWS - CUSTOMIZING THE HELM CHART TEMPLATE
+
+      - name: AWS - Customizing the Helm chart template
+        run: |
+          cp ${{ env.VALUES_YML_FULL_PATH_ENVSUBST }} ${{ env.VALUES_YML_FULL_PATH }}.orig
+          envsubst < ${{ env.VALUES_YML_FULL_PATH }}.orig > ${{ env.VALUES_YML_FULL_PATH }}
+        env:
+          APP_IMAGE: ${{ env.AWS_ADDITION_DOCKER_IMAGE_NAME }}
+          APL_NAME: ${{ env.ADD_SUFFIX_NAME }}
+          CONTAINER_PORT: ${{ env.CONTAINER_PORT_ADD }}
+          PORT: ${{ env.PORT_ADD }}
+          HELLO_SVC_TYPE: ${{ env.SVCTYPE_ADD }}
+          ALB_SCHEME: "internet-facing"
+
+      # VERBOSE - LISTS THE THE HELM CHART values.yml FILE 
+
+      - name: VERBOSE (AWS) - Lists the Helm chart values.yml contents
+        if: ${{ env.VERBOSE == 'true' }}
+        run: |      
+          echo ">>>>> File: ${{ env.VALUES_YML_FULL_PATH }}"
+          cat ${{ env.VALUES_YML_FULL_PATH }}
+
+      # GCP - LINTING THE HELM CHART
+
+      - name: Executes the chart lint
+        run: |
+          helm lint "${{ env.HELM_FOLDER }}"  
+
+      # GCP - PACKAGING THE HELM CHART ADDITION
+
+      - name: Package the Helm Chart
+        run: |
+          helm package "${{ env.HELM_FOLDER }}"
+
+
+  
