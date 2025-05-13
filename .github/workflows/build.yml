@@ -220,14 +220,12 @@ jobs:
         uses: helm/chart-releaser-action@v2
         id: chart_upload
         with:
-          chart-repo: ${{ github.actor }}
+          chart-repo: https://github.com/${{ github.repository_owner }}/${{ github.repository }}/helm-charts
           chart-name: ${{ env.APL_NAME }}
           chart-version: ${{ env._APLVERSION }}
-          package-path: ${{ github.workspace }}
+          package-path: ./helm-chart
           token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          #GITHUB_REPOSITORY: ${{ github.repository }}
           #           GITHUB_ACTOR: ${{ github.actor }}
           #           GITHUB_REF: ${{ github.ref }}
           #           GITHUB_SHA: ${{ github.sha }}
