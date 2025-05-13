@@ -38,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest  
     name: Build and pushes image.
 
+    outputs:
+      aplversion: ${{ steps.set-version.outputs.aplversion }}
     steps:
 
       # ACTIONS - CHECKOUT THE LOCAL GITHUB ACTIONS
@@ -83,7 +85,7 @@ jobs:
       - name: Set the version of the pod-info-apl application
         id: set-version
         run: |
-          echo "::set-output name=aplversion::${{ steps.apl-get-app-version.outputs.version }}"
+          echo "aplversion=${{ steps.apl-get-app-version.outputs.version }}" >> $GITHUB_ENV
 
       # VERBOSE - LISTS THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
 
@@ -91,7 +93,7 @@ jobs:
         if: ${{ env.VERBOSE == 'true' }}      
         run: |
           echo ">>>>> Version from the step : ${{ steps.apl-get-app-version.outputs.version }}"
-          echo ">>>>> Version from the env  : ${{ env._APLVERSION }}"
+          echo ">>>>> Version from the env  : ${{ env.aplversion }}"
 
       # CREATING THE DOCKER FOLDER TO COPY THE BINARIES AND DOCKERFILE TO IT
 
@@ -183,7 +185,7 @@ jobs:
         env:
           APP_IMAGE: ${{ env.APL_DOCKER_IMAGE_NAME }}
           APL_NAME: ${{ env.APL_NAME }}
-          APL_VERSION: ${{ needs.set-version-job.outputs.aplversion }}
+          APL_VERSION: ${{ needs.Build-Push-Image.outputs.aplversion }}
           CONTAINER_PORT: ${{ env.CONTAINER_PORT_APL }}
           PORT: ${{ env.PORT_APL }}
           SVC_TYPE: ${{ env.SVCTYPE_APL }}
@@ -212,7 +214,7 @@ jobs:
           helm package "${{ env.HELM_FOLDER }}"
           helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-$APL_VERSION.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
         env:
-          APL_VERSION: ${{ needs.set-version-job.outputs.aplversion }}
+          APL_VERSION: ${{ needs.Build-Push-Image.outputs.aplversion }}
 
       # CONFIGURING GIT FOR THE CHART RELEASER
 
