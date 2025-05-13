@@ -198,16 +198,17 @@ jobs:
 
       # PACKAGING THE HELM CHART
 
-#      - name: Package the Helm Chart
-#        run: |
-#          helm package "${{ env.HELM_FOLDER }}"
+      - name: Package the Helm Chart
+        run: |
+          helm package "${{ env.HELM_FOLDER }}"
+          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${{ env._APLVERSION }}.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
 
       # CONFIGURING GIT FOR THE CHART RELEASER
 
-      - name: Configure Git
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+      #      - name: Configure Git
+      #        run: |
+      #          git config user.name "${{ github.actor }}"
+      #          git config user.email "${{ github.actor }}@users.noreply.github.com"
 
 #      - name: Run Helm Chart Releaser
 #        uses: helm/chart-releaser-action@v2
@@ -216,15 +217,15 @@ jobs:
 
       # PUSH THE HELM CHART TO THE GITTHUB REGISTRY
 
-      - name: Push the Helm Chart to GitHub Registry
-        uses: helm/chart-releaser-action@v2
-        id: chart_upload
-        with:
-          chart-repo: https://github.com/${{ github.repository_owner }}/${{ github.repository }}/helm-charts
-          chart-name: ${{ env.APL_NAME }}
-          chart-version: ${{ env._APLVERSION }}
-          package-path: ./helm-chart
-          token: ${{ secrets.GITHUB_TOKEN }}
+      #      - name: Push the Helm Chart to GitHub Registry
+      #        uses: helm/chart-releaser-action@v2
+      #        id: chart_upload
+      #        with:
+      #          chart-repo: https://github.com/${{ github.repository_owner }}/${{ github.repository }}/helm-charts
+      #          chart-name: ${{ env.APL_NAME }}
+      #          chart-version: ${{ env._APLVERSION }}
+      #          package-path: ./helm-chart
+      #          token: ${{ secrets.GITHUB_TOKEN }}
           #GITHUB_REPOSITORY: ${{ github.repository }}
           #           GITHUB_ACTOR: ${{ github.actor }}
           #           GITHUB_REF: ${{ github.ref }}
@@ -243,10 +244,10 @@ jobs:
           #           GITHUB_WORKSPACE: ${{ github.workspace }}
           #           GITHUB_EVENT_NAME: ${{ github.event_name }}   
 
-      - name: Show Download Info
-        run: |
-          echo "Download the Helm Chart using:"
-          echo "helm repo add my-repo https://github.com/${{ github.actor }}/helm-charts"
-          echo "helm repo update"
-          echo "helm pull my-repo/${{ env.APL_NAME }} --version ${{ env._APLVERSION }}"
+#      - name: Show Download Info
+#        run: |
+#          echo "Download the Helm Chart using:"
+#          echo "helm repo add my-repo https://github.com/${{ github.actor }}/helm-charts"
+#          echo "helm repo update"
+#          echo "helm pull my-repo/${{ env.APL_NAME }} --version ${{ env._APLVERSION }}"
   
