@@ -186,7 +186,7 @@ jobs:
           APL_VERSION: ${{ needs.set-version-job.outputs.aplversion }}
           CONTAINER_PORT: ${{ env.CONTAINER_PORT_APL }}
           PORT: ${{ env.PORT_APL }}
-          HELLO_SVC_TYPE: ${{ env.SVCTYPE_APL }}
+          SVC_TYPE: ${{ env.SVCTYPE_APL }}
           ALB_SCHEME: "internet-facing"
 
       # VERBOSE - LISTS THE THE HELM CHART values.yml FILE 
