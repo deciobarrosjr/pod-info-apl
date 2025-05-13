@@ -15,7 +15,7 @@ spec:
         app: {{ .Values.AplName }}
     spec:
       containers:
-      - image: {{ .Values.AppImage }}
+      - image: "{{ .Values.AppImage }}:{{ .Values.AplVersion }}"
         imagePullPolicy: Always
         name: {{ .Values.AplName }}
         ports:

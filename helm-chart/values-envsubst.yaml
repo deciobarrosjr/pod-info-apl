@@ -5,6 +5,7 @@
 AppImage: $APP_IMAGE
 replicaCount: 1
 AplName: $APL_NAME
+AplVersion: $APL_VERSION
 svcType: $SVC_TYPE
 containerPort: $CONTAINER_PORT
 Port: $PORT

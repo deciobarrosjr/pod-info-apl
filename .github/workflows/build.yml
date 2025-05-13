@@ -3,43 +3,30 @@ permissions:
   contents: read
   packages: write
 on:
-  workflow_dispatch:
-    inputs:
-      VERBOSE:
-        description: 'Verbose mode'
-        required: true
-        default: false 
-        type: boolean 
+  push:
+    branches:
+      - main
 
 env:
   # GENERAL ENVIRONMENT VARIABLES
 
-  APL_DOCKER_IMAGE_NAME: 'pod-info-apl'
-  APL_PROJECT_NAME: 'pod-info-apl'
-  VERBOSE: ${{ github.event.inputs.VERBOSE }}
-  HELM_FOLDER: './helm-chart'
+  APL_DOCKER_IMAGE_NAME: 'ghcr.io/${{ github.actor }}/pod-info-apl'
+  APL_NAME: 'pod-info-apl'
+  VERBOSE: ${{ vars.verbose }}
 
+  # GENERAL HELM CHART VARIABLES
+
+  HELM_FOLDER: './helm-chart'
   VALUES_YML_FULL_PATH: './helm-chart/values.yaml'
   VALUES_YML_FULL_PATH_ENVSUBST: './helm-chart/values-envsubst.yaml'
   VALUES_CHART_FULL_PATH: './helm-chart/Chart.yaml'
 
-
   # HELM CHART CUSTOMIZATION VARIABLES
 
-  SVCTYPE_ADD: ${{ vars.SVCTYPE_ADD }}
-  SVCTYPE_SUB: ${{ vars.SVCTYPE_SUB }}
-  SVCTYPE_DIV: ${{ vars.SVCTYPE_DIV }}
-  SVCTYPE_MUL: ${{ vars.SVCTYPE_MUL }}
+  SVCTYPE_APL: 'svcType'
+  CONTAINER_PORT_APL: '3030'
+  PORT_APL: '80'
 
-  CONTAINER_PORT_ADD: ${{ vars.CONTAINER_PORT_ADD }}
-  CONTAINER_PORT_SUB: ${{ vars.CONTAINER_PORT_SUB }}
-  CONTAINER_PORT_DIV: ${{ vars.CONTAINER_PORT_DIV }}
-  CONTAINER_PORT_MUL: ${{ vars.CONTAINER_PORT_MUL }}
-
-  PORT_ADD: ${{ vars.PORT_ADD }}
-  PORT_SUB: ${{ vars.PORT_SUB }}
-  PORT_DIV: ${{ vars.PORT_DIV }}
-  PORT_MUL: ${{ vars.PORT_MUL }}
  
 
 jobs:
@@ -91,11 +78,20 @@ jobs:
           app_folder: "./application"
           verbose: ${{ env.VERBOSE }}
 
+      # VERSION ENV VARIABLE - SETS THE VERSION OF THE POD-INFO-APL APPLICATION
+
+      - name: Set the version of the pod-info-apl application
+        id: set-version
+        run: |
+          echo "_APLVERSION=${{ steps.apl-get-app-version.outputs.version }}" >> $GITHUB_ENV
+
       # VERBOSE - LISTS THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
 
       - name: Verbose - print the Current App version
+        if: ${{ env.VERBOSE == 'true' }}      
         run: |
-          echo ">>>>> Version of the pod-info-apl : ${{ steps.apl-get-app-version.outputs.version }}"
+          echo ">>>>> Version from the step : ${{ steps.apl-get-app-version.outputs.version }}"
+          echo ">>>>> Version from the env  : ${{ env._APLVERSION }}"
 
       # CREATING THE DOCKER FOLDER TO COPY THE BINARIES AND DOCKERFILE TO IT
 
@@ -129,7 +125,7 @@ jobs:
         with:
           context: ./application
           push: true
-          tags: ghcr.io/${{ github.actor }}/${{ env.APL_DOCKER_IMAGE_NAME }}:${{ steps.apl-get-app-version.outputs.version }}
+          tags: ${{ env.APL_DOCKER_IMAGE_NAME }}:${{ steps.apl-get-app-version.outputs.version }}
 
 
       # VERBOSE - LISTS THE THE DOCKER LOCAL IMAGES CREATED  
@@ -145,11 +141,10 @@ jobs:
   #                                          HELM CHART BUILD AND PUSH                                       #
   ############################################################################################################           
 
-
-  AWS-Helm-Chart-Build-Push-Pckg:
+  Helm-Chart-Build-Push-Pckg:
     runs-on: ubuntu-latest  
-    name: AWS - Helm Build and push.
-    if: ${{ 1 == 0 }}
+    name: Helm Build and push.
+    needs: Build-Push-Image
     steps:
 
       # helm-chart - CHECKOUT THE HELM CHART TEMPLATE
@@ -163,48 +158,90 @@ jobs:
           sparse-checkout: |
             helm-chart/          
 
-      # AWS - VERBOSE - LISTS THE THE HELM CHART TEMPLATE FOLDER 
+      # VERBOSE - LISTS THE THE HELM CHART TEMPLATE FOLDER 
 
-      - name: VERBOSE (AWS) - Lists the Helm chart template folder
+      - name: VERBOSE - Lists the Helm chart template folder
         if: ${{ env.VERBOSE == 'true' }}
         run: |
           ls -al ./. 
           ls -Rl ./helm-chart
           cat ./helm-chart/values-envsubst.yaml
 
-      # AWS - CUSTOMIZING THE HELM CHART TEMPLATE
+      # CUSTOMIZING THE HELM CHART TEMPLATE
 
-      - name: AWS - Customizing the Helm chart template
+      - name: Customizing the Helm chart template
         run: |
           cp ${{ env.VALUES_YML_FULL_PATH_ENVSUBST }} ${{ env.VALUES_YML_FULL_PATH }}.orig
           envsubst < ${{ env.VALUES_YML_FULL_PATH }}.orig > ${{ env.VALUES_YML_FULL_PATH }}
         env:
-          APP_IMAGE: ${{ env.AWS_ADDITION_DOCKER_IMAGE_NAME }}
-          APL_NAME: ${{ env.ADD_SUFFIX_NAME }}
-          CONTAINER_PORT: ${{ env.CONTAINER_PORT_ADD }}
-          PORT: ${{ env.PORT_ADD }}
-          HELLO_SVC_TYPE: ${{ env.SVCTYPE_ADD }}
+          APP_IMAGE: ${{ env.APL_DOCKER_IMAGE_NAME }}
+          APL_NAME: ${{ env.APL_NAME }}
+          APL_VERSION: ${{ env._APLVERSION }}
+          CONTAINER_PORT: ${{ env.CONTAINER_PORT }}
+          PORT: ${{ env.PORT }}
+          HELLO_SVC_TYPE: ${{ env.SVCTYPE }}
           ALB_SCHEME: "internet-facing"
 
       # VERBOSE - LISTS THE THE HELM CHART values.yml FILE 
 
-      - name: VERBOSE (AWS) - Lists the Helm chart values.yml contents
+      - name: VERBOSE - Lists the Helm chart values.yml contents
         if: ${{ env.VERBOSE == 'true' }}
         run: |      
           echo ">>>>> File: ${{ env.VALUES_YML_FULL_PATH }}"
           cat ${{ env.VALUES_YML_FULL_PATH }}
 
-      # GCP - LINTING THE HELM CHART
+      # LINTING THE HELM CHART
 
       - name: Executes the chart lint
         run: |
           helm lint "${{ env.HELM_FOLDER }}"  
 
-      # GCP - PACKAGING THE HELM CHART ADDITION
+      # PACKAGING THE HELM CHART
 
-      - name: Package the Helm Chart
+#      - name: Package the Helm Chart
+#        run: |
+#          helm package "${{ env.HELM_FOLDER }}"
+
+      # CONFIGURING GIT FOR THE CHART RELEASER
+
+      - name: Configure Git
         run: |
-          helm package "${{ env.HELM_FOLDER }}"
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
 
+#      - name: Run Helm Chart Releaser
+#        uses: helm/chart-releaser-action@v2
+#        env:
+#          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      # PUSH THE HELM CHART TO THE GITTHUB REGISTRY
+
+      - name: Push the Helm Chart to GitHub Registry
+        uses: helm/chart-releaser-action@v2
+        with:
+          chart-repo: ${{ github.actor }}
+          chart-name: ${{ env.APL_NAME }}
+          chart-version: ${{ env._APLVERSION }}
+          package-path: ${{ github.workspace }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          #         env:
+          #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #           GITHUB_REPOSITORY: ${{ github.repository }}
+          #           GITHUB_ACTOR: ${{ github.actor }}
+          #           GITHUB_REF: ${{ github.ref }}
+          #           GITHUB_SHA: ${{ github.sha }}
+          #           GITHUB_WORKFLOW: ${{ github.workflow }}
+          #           GITHUB_RUN_ID: ${{ github.run_id }}
+          #           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          #           GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+          #           GITHUB_RUN_URL: ${{ github.run_url }}
+          #           GITHUB_SERVER_URL: ${{ github.server_url }}
+          #           GITHUB_API_URL: ${{ github.api_url }}
+          #           GITHUB_GRAPHQL_URL: ${{ github.graphql_url }}
+          #           GITHUB_ENV: ${{ github.env }}
+          #           GITHUB_PATH: ${{ github.path }}
+          #           GITHUB_OUTPUT: ${{ github.output }}
+          #           GITHUB_WORKSPACE: ${{ github.workspace }}
+          #           GITHUB_EVENT_NAME: ${{ github.event_name }}   
 
   

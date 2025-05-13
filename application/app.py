@@ -6,7 +6,7 @@ import netifaces
 
 app = Flask(__name__)
 
-__version__ = "1.0.1"
+__version__ = "1.0.0"
 
 def get_network_info():
     hostname = socket.gethostname()
