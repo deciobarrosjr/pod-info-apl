@@ -4,7 +4,7 @@ The purpose of this Hello World application is replying information about a POD 
 
 <br>
 
-## Infra Structure - Resources that are expected to be provisioned manually.
+## Repository - GitHub Configurations to use Registry.
 
 All that is required is a GitHub Free Tier Personal Account with the required configuration to allow the registry use on it.<br>
 Some important restrictions should pointed out about the GitHub Free Tier:

@@ -218,15 +218,16 @@ jobs:
 
       - name: Push the Helm Chart to GitHub Registry
         uses: helm/chart-releaser-action@v2
+        id: chart_upload
         with:
           chart-repo: ${{ github.actor }}
           chart-name: ${{ env.APL_NAME }}
           chart-version: ${{ env._APLVERSION }}
-          package-path: "${{ env.HELM_FOLDER }}"
+          package-path: ${{ github.workspace }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          #         env:
-          #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          #           GITHUB_REPOSITORY: ${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           #           GITHUB_ACTOR: ${{ github.actor }}
           #           GITHUB_REF: ${{ github.ref }}
           #           GITHUB_SHA: ${{ github.sha }}
@@ -244,4 +245,10 @@ jobs:
           #           GITHUB_WORKSPACE: ${{ github.workspace }}
           #           GITHUB_EVENT_NAME: ${{ github.event_name }}   
 
+      - name: Show Download Info
+        run: |
+          echo "Download the Helm Chart using:"
+          echo "helm repo add my-repo https://github.com/${{ github.actor }}/helm-charts"
+          echo "helm repo update"
+          echo "helm pull my-repo/${{ env.APL_NAME }} --version ${{ env._APLVERSION }}"
   
