@@ -222,7 +222,7 @@ jobs:
           chart-repo: ${{ github.actor }}
           chart-name: ${{ env.APL_NAME }}
           chart-version: ${{ env._APLVERSION }}
-          package-path: ${{ github.workspace }}
+          package-path: "${{ env.HELM_FOLDER }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           #         env:
           #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
