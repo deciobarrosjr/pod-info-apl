@@ -83,7 +83,7 @@ jobs:
       - name: Set the version of the pod-info-apl application
         id: set-version
         run: |
-          echo "_APLVERSION=${{ steps.apl-get-app-version.outputs.version }}" >> $GITHUB_ENV
+          echo "::set-output name=aplversion::${{ steps.apl-get-app-version.outputs.version }}"
 
       # VERBOSE - LISTS THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
 
@@ -147,6 +147,13 @@ jobs:
     needs: Build-Push-Image
     steps:
 
+      # INSTALL ENVSUBST (USED TO PROCESS THE values.yml CUSTOMIZATION)
+
+      - name: Ensure gettext is installed
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
       # helm-chart - CHECKOUT THE HELM CHART TEMPLATE
 
       - name: Checkout Code
@@ -169,11 +176,6 @@ jobs:
 
       # CUSTOMIZING THE HELM CHART TEMPLATE
 
-      - name: Ensure gettext is installed
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gettext
-
       - name: Customizing the Helm chart template
         run: |
           cp ${{ env.VALUES_YML_FULL_PATH_ENVSUBST }} ${{ env.VALUES_YML_FULL_PATH }}.orig
@@ -181,10 +183,10 @@ jobs:
         env:
           APP_IMAGE: ${{ env.APL_DOCKER_IMAGE_NAME }}
           APL_NAME: ${{ env.APL_NAME }}
-          APL_VERSION: ${{ env._APLVERSION }}
+          APL_VERSION: ${{ needs.set-version-job.outputs.aplversion }}
           CONTAINER_PORT: ${{ env.CONTAINER_PORT_APL }}
           PORT: ${{ env.PORT_APL }}
-          HELLO_SVC_TYPE: ${{ env.SVCTYPE }}
+          HELLO_SVC_TYPE: ${{ env.SVCTYPE_APL }}
           ALB_SCHEME: "internet-facing"
 
       # VERBOSE - LISTS THE THE HELM CHART values.yml FILE 
@@ -208,9 +210,9 @@ jobs:
           [ "${{ env.VERBOSE }}" == "true" ] && echo ">>>>> Apl Version: ${{ env.APL_VERSION }}"
 
           helm package "${{ env.HELM_FOLDER }}"
-          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${{ env.APL_VERSION }}.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
+          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-$APL_VERSION.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
         env:
-          APL_VERSION: ${{ env._APLVERSION }}
+          APL_VERSION: ${{ needs.set-version-job.outputs.aplversion }}
 
       # CONFIGURING GIT FOR THE CHART RELEASER
 
