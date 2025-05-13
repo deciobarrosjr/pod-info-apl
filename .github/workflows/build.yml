@@ -198,10 +198,10 @@ jobs:
 
       # PACKAGING AND PUSHING THE HELM CHART
 
-      - name: Package and push the Helm Chart
+      - name: Package and push Helm Chart to OCI Registry
         run: |
           helm package "${{ env.HELM_FOLDER }}"
-          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${APLVERSION}.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
+          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${APL_VERSION}.tgz" ghcr.io/${{ github.actor }}/helm-charts
         env:
           APL_VERSION: ${{ env._APLVERSION }}
 
