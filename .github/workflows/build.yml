@@ -169,6 +169,11 @@ jobs:
 
       # CUSTOMIZING THE HELM CHART TEMPLATE
 
+      - name: Ensure gettext is installed
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
       - name: Customizing the Helm chart template
         run: |
           cp ${{ env.VALUES_YML_FULL_PATH_ENVSUBST }} ${{ env.VALUES_YML_FULL_PATH }}.orig
@@ -177,8 +182,8 @@ jobs:
           APP_IMAGE: ${{ env.APL_DOCKER_IMAGE_NAME }}
           APL_NAME: ${{ env.APL_NAME }}
           APL_VERSION: ${{ env._APLVERSION }}
-          CONTAINER_PORT: ${{ env.CONTAINER_PORT }}
-          PORT: ${{ env.PORT }}
+          CONTAINER_PORT: ${{ env.CONTAINER_PORT_APL }}
+          PORT: ${{ env.PORT_APL }}
           HELLO_SVC_TYPE: ${{ env.SVCTYPE }}
           ALB_SCHEME: "internet-facing"
 
