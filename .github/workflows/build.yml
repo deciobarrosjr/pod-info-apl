@@ -203,6 +203,7 @@ jobs:
           helm package "${{ env.HELM_FOLDER }}"
           helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${{ env._APLVERSION }}.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
 
+
       # CONFIGURING GIT FOR THE CHART RELEASER
 
       #      - name: Configure Git
