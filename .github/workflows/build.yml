@@ -37,9 +37,9 @@ jobs:
   Build-Push-Image:
     runs-on: ubuntu-latest  
     name: Build and pushes image.
-
     outputs:
-      aplversion: ${{ steps.set-version.outputs.aplversion }}
+      aplversion: ${{ steps.apl-get-app-version.outputs.version }}
+
     steps:
 
       # ACTIONS - CHECKOUT THE LOCAL GITHUB ACTIONS
@@ -82,10 +82,10 @@ jobs:
 
       # VERSION ENV VARIABLE - SETS THE VERSION OF THE POD-INFO-APL APPLICATION
 
-      - name: Set the version of the pod-info-apl application
-        id: set-version
-        run: |
-          echo "aplversion=${{ steps.apl-get-app-version.outputs.version }}" >> $GITHUB_ENV
+#      - name: Set the version of the pod-info-apl application
+#        id: set-version
+#        run: |
+#          echo "aplversion=${{ steps.apl-get-app-version.outputs.version }}" >> $GITHUB_ENV
 
       # VERBOSE - LISTS THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
 
