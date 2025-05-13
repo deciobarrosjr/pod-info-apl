@@ -196,13 +196,14 @@ jobs:
         run: |
           helm lint "${{ env.HELM_FOLDER }}"  
 
-      # PACKAGING THE HELM CHART
+      # PACKAGING AND PUSHING THE HELM CHART
 
-      - name: Package the Helm Chart
+      - name: Package and push the Helm Chart
         run: |
           helm package "${{ env.HELM_FOLDER }}"
-          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${{ env._APLVERSION }}.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
-
+          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${APLVERSION}.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
+        env:
+          APL_VERSION: ${{ env._APLVERSION }}
 
       # CONFIGURING GIT FOR THE CHART RELEASER
 
