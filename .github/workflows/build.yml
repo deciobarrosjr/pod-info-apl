@@ -200,8 +200,10 @@ jobs:
 
       - name: Package and push Helm Chart to OCI Registry
         run: |
+          [ "${{ env.VERBOSE }}" == "true" ] && echo ">>>>> Apl Version: ${{ env._APLVERSION }}"
+
           helm package "${{ env.HELM_FOLDER }}"
-          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${APL_VERSION}.tgz" ghcr.io/${{ github.actor }}/helm-charts
+          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-${APL_VERSION}.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
         env:
           APL_VERSION: ${{ env._APLVERSION }}
 
