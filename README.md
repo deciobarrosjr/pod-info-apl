@@ -36,3 +36,10 @@ This workflow will be triggered on any push to the main branch on the repository
 > Application version change<br>
 
 This is a very simple application and probably will not require any additional functionality. Just in case it´s requires, the variable <span style="color: chocolate;">__version__</span> on the file <span style="color: chocolate;">pod-info-apl/application/app.py</span> should be changed and the change be commited/pushed again to the main branch.
+
+<br>
+
+## Repository - Checking the image and Helm Chart published.
+
+All that is required is a GitHub Free Tier Personal Account with the required configuration to allow the registry use on it.<br>
+Some important restrictions should pointed out about the GitHub Free Tier:
