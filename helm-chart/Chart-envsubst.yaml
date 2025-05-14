@@ -1,9 +1,9 @@
 apiVersion: v2
-name: my-apl
+name: $APL_NAME
 description: A Helm chart for a local project
 type: application
-version: 1.0.0
-appVersion: 1.0.0
+version: $APL_VERSION
+appVersion: $APL_VERSION
 
 keywords:
   - local

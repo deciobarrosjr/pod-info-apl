@@ -19,7 +19,8 @@ env:
   HELM_FOLDER: './helm-chart'
   VALUES_YML_FULL_PATH: './helm-chart/values.yaml'
   VALUES_YML_FULL_PATH_ENVSUBST: './helm-chart/values-envsubst.yaml'
-  VALUES_CHART_FULL_PATH: './helm-chart/Chart.yaml'
+  CHART_YML_FULL_PATH: './helm-chart/Chart.yaml'
+  CHART_YML_FULL_PATH_ENVSUBST: './helm-chart/Chart-envsubst.yaml'
 
   # HELM CHART CUSTOMIZATION VARIABLES
 
@@ -175,6 +176,8 @@ jobs:
         run: |
           cp ${{ env.VALUES_YML_FULL_PATH_ENVSUBST }} ${{ env.VALUES_YML_FULL_PATH }}.orig
           envsubst < ${{ env.VALUES_YML_FULL_PATH }}.orig > ${{ env.VALUES_YML_FULL_PATH }}
+          cp ${{ env.CHART_YML_FULL_PATH_ENVSUBST }} ${{ env.CHART_YML_FULL_PATH }}.orig
+          envsubst < ${{ env.CHART_YML_FULL_PATH }}.orig > ${{ env.CHART_YML_FULL_PATH }}
         env:
           APP_IMAGE: ${{ env.APL_DOCKER_IMAGE_NAME }}
           APL_NAME: ${{ env.APL_NAME }}
@@ -191,6 +194,8 @@ jobs:
         run: |      
           echo ">>>>> File: ${{ env.VALUES_YML_FULL_PATH }}"
           cat ${{ env.VALUES_YML_FULL_PATH }}
+          echo ">>>>> File: ${{ env.CHART_YML_FULL_PATH }}"
+          cat ${{ env.CHART_YML_FULL_PATH }}
 
       # LINTING THE HELM CHART
 
