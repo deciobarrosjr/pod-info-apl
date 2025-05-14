@@ -80,13 +80,6 @@ jobs:
           app_folder: "./application"
           verbose: ${{ env.VERBOSE }}
 
-      # VERSION ENV VARIABLE - SETS THE VERSION OF THE POD-INFO-APL APPLICATION
-
-#      - name: Set the version of the pod-info-apl application
-#        id: set-version
-#        run: |
-#          echo "aplversion=${{ steps.apl-get-app-version.outputs.version }}" >> $GITHUB_ENV
-
       # VERBOSE - LISTS THE CURRENT VERSION OF THE POD-INFO-APL APPLICATION
 
       - name: Verbose - print the Current App version
