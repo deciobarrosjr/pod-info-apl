@@ -204,8 +204,8 @@ jobs:
         run: |
           [ "${{ env.VERBOSE }}" == "true" ] && echo ">>>>> Apl Version: ${{ env.APL_VERSION }}"
 
-          helm package "${{ env.HELM_FOLDER }}"
-          helm push "${{ env.HELM_FOLDER }}/${{ env.APL_NAME }}-$APL_VERSION.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
+          helm package "${{ env.HELM_FOLDER }}" --destination "${{ github.workspace }}"
+          helm push "${{ github.workspace }}/${{ env.APL_NAME }}-$APL_VERSION.tgz" oci://ghcr.io/${{ github.actor }}/helm-charts
         env:
           APL_VERSION: ${{ needs.Build-Push-Image.outputs.aplversion }}
 
