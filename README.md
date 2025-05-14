@@ -41,5 +41,26 @@ This is a very simple application and probably will not require any additional f
 
 ## Repository - Checking the image and Helm Chart published.
 
-All that is required is a GitHub Free Tier Personal Account with the required configuration to allow the registry use on it.<br>
-Some important restrictions should pointed out about the GitHub Free Tier:
+Bellow a illustration of where your Application Image and Helm Chart are published.
+<br>
+NOTE: On a production environment, the best aproach would be publishing the Helm Chart on the GitHub Pages using the <span style="color: chocolate;">helm/chart-releaser-action@v2</span> module.
+
+<div style="border: 1px solid gray; display: inline-block; margin-left: 0px;">
+    <img src="./images/github-image-helm-registry.jpg" alt="Image and Helm Package">
+</div>
+
+<br>
+
+Clicking on any of the links will bring to you the package page with the address to use it:<br>
+
+<div style="border: 1px solid gray; display: inline-block; margin-left: 0px;">
+    <img src="./images/github-image-registry.jpg" alt="Image and Helm Package">
+</div>
+
+<br>
+
+<div style="border: 1px solid gray; display: inline-block; margin-left: 0px;">
+    <img src="./images/github-helm-registry.jpg" alt="Image and Helm Package">
+</div>
+
+<br>

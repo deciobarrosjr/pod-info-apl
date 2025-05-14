@@ -192,9 +192,9 @@ jobs:
       - name: VERBOSE - Lists the Helm chart values.yml contents
         if: ${{ env.VERBOSE == 'true' }}
         run: |      
-          echo " "; echo ">>>>> File: ${{ env.VALUES_YML_FULL_PATH }}"
+          echo " "; echo ">>>>> File: ${{ env.VALUES_YML_FULL_PATH }}"; echo " "
           cat ${{ env.VALUES_YML_FULL_PATH }}
-          echo " "; echo ">>>>> File: ${{ env.CHART_YML_FULL_PATH }}"
+          echo " "; echo ">>>>> File: ${{ env.CHART_YML_FULL_PATH }}"; echo " "
           cat ${{ env.CHART_YML_FULL_PATH }}
 
       # LINTING THE HELM CHART
