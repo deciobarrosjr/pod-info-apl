@@ -14,5 +14,7 @@ deployment:
   env:
     - name: HELLO_SVC_TYPE
       value: $HELLO_SVC_TYPE
+    - name: APL_NAME
+      value: $APL_NAME
 service:
   AlbScheme: $ALB_SCHEME
