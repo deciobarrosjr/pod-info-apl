@@ -191,15 +191,16 @@ jobs:
 
       - name: VERBOSE - Lists the Helm chart values.yml,chart.yml and deployment.ym contents
         if: ${{ env.VERBOSE == 'true' }}
-        run: |  
+        run: |
+          echo ">>>>> Current working directory:"  
           pwd    
           echo " "; echo ">>>>> File: ${{ env.VALUES_YML_FULL_PATH }}"; echo " "
           cat ${{ env.VALUES_YML_FULL_PATH }}
           echo " "; echo ">>>>> File: ${{ env.CHART_YML_FULL_PATH }}"; echo " "
           cat ${{ env.CHART_YML_FULL_PATH }}
-          echo " "; echo ">>>>> File: ${{ template.yml }}"; echo " "
+          echo " "; echo ">>>>> File: ./helm-chart/templates/deployment.yaml"; echo " "
           cat ./helm-chart/templates/deployment.yaml
-          
+
       # LINTING THE HELM CHART
 
       - name: Executes the chart lint
