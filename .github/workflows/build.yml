@@ -189,7 +189,7 @@ jobs:
 
       # VERBOSE - LISTS THE THE HELM CHART values.yml FILE 
 
-      - name: VERBOSE - Lists the Helm chart values.yml,chart.yml and deployment.yml contents
+      - name: VERBOSE - Lists the Helm chart values.yml,chart.yml and deployment.ym contents
         if: ${{ env.VERBOSE == 'true' }}
         run: |  
           pwd    
@@ -198,7 +198,8 @@ jobs:
           echo " "; echo ">>>>> File: ${{ env.CHART_YML_FULL_PATH }}"; echo " "
           cat ${{ env.CHART_YML_FULL_PATH }}
           echo " "; echo ">>>>> File: ${{ template.yml }}"; echo " "
-          cat ${{ helm-chart/templates/deployment.yaml }}
+          cat ./helm-chart/templates/deployment.yaml
+          
       # LINTING THE HELM CHART
 
       - name: Executes the chart lint
