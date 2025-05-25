@@ -23,6 +23,5 @@ spec:
         env:
           {{- range .Values.deployment.env }}
           - name: {{ .name | quote }}
-            {{- if .value }}
             value: {{ .value | quote }}
           {{- end }}
