@@ -22,7 +22,6 @@ spec:
         - containerPort: {{ .Values.containerPort }}
         env:
           {{- range .Values.deployment.env }}
-          {{- $parts := splitList "=" . }}
-          - name: {{ index $parts 0 | quote }}
-            value: {{ index $parts 1 | quote }}
+          - name: {{ .name | quote }}
+            value: {{ .value | quote }}
           {{- end }}
