@@ -22,6 +22,6 @@ spec:
         - containerPort: {{ .Values.containerPort }}
         env:
           {{- range .Values.deployment.env }}
-          - name: {{ .name | quote }}
-            value: {{ .value | quote }}
+          - name: {{ .name }}
+            value: {{ .value }}
           {{- end }}
