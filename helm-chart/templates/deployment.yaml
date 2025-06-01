@@ -15,7 +15,7 @@ spec:
         app: {{ .Values.AplName }}
     spec:
       nodeSelector:
-        cloud.google.com/gke-nodepool: {{ .Values.Node_Pool_Name }}
+        cloud.google.com/gke-nodepool: {{ .Values.NodePoolName }}
       containers:
       - image: "{{ .Values.AppImage }}:{{ .Values.AplVersion }}"
         imagePullPolicy: Always
