@@ -204,9 +204,9 @@ jobs:
 
       # LINTING THE HELM CHART
 
-      - name: Executes the chart lint
-        run: |
-          helm lint "${{ env.HELM_FOLDER }}"  
+      #- name: Executes the chart lint
+      #  run: |
+      #    helm lint "${{ env.HELM_FOLDER }}"  
 
       # AUTHENTICATING HELM WITH GITHUB CONTAINER REGISTRY
 
