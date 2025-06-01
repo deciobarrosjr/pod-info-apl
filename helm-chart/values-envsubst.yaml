@@ -10,7 +10,8 @@ svcType: $SVC_TYPE
 containerPort: $CONTAINER_PORT
 Port: $PORT
 NodePort: 30000
-NodePoolName: $NODE_POOL_NAME
+deployment:
+  nodeSelector: $NODE_POOL_NAME
   env:
     - name: HELLO_SVC_TYPE
       value: $HELLO_SVC_TYPE
