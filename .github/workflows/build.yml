@@ -145,10 +145,10 @@ jobs:
 
       # INSTALL ENVSUBST (USED TO PROCESS THE values.yml CUSTOMIZATION)
 
-      - name: Ensure gettext is installed
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gettext
+#      - name: Ensure gettext is installed
+#        run: |
+#          sudo apt-get update
+#          sudo apt-get install -y gettext
 
       # helm-chart - CHECKOUT THE HELM CHART TEMPLATE
 
@@ -168,24 +168,25 @@ jobs:
         run: |
           ls -al ./. 
           ls -Rl ./helm-chart
-          cat ./helm-chart/values-envsubst.yaml
+          cat ./helm-chart/values.yaml
+#          cat ./helm-chart/values-envsubst.yaml          
 
       # CUSTOMIZING THE HELM CHART TEMPLATE
 
-      - name: Customizing the Helm chart template
-        run: |
-          cp ${{ env.VALUES_YML_FULL_PATH_ENVSUBST }} ${{ env.VALUES_YML_FULL_PATH }}.orig
-          envsubst < ${{ env.VALUES_YML_FULL_PATH }}.orig > ${{ env.VALUES_YML_FULL_PATH }}
-          cp ${{ env.CHART_YML_FULL_PATH_ENVSUBST }} ${{ env.CHART_YML_FULL_PATH }}.orig
-          envsubst < ${{ env.CHART_YML_FULL_PATH }}.orig > ${{ env.CHART_YML_FULL_PATH }}
-        env:
-          APP_IMAGE: ${{ env.APL_DOCKER_IMAGE_NAME }}
-          APL_NAME: ${{ env.APL_NAME }}
-          APL_VERSION: ${{ needs.Build-Push-Image.outputs.aplversion }}
-          CONTAINER_PORT: ${{ env.CONTAINER_PORT_APL }}
-          PORT: ${{ env.PORT_APL }}
-          SVC_TYPE: ${{ env.SVCTYPE_APL }}
-          ALB_SCHEME: "internet-facing"
+      #- name: Customizing the Helm chart template
+      #  run: |
+      #    cp ${{ env.VALUES_YML_FULL_PATH_ENVSUBST }} ${{ env.VALUES_YML_FULL_PATH }}.orig
+      #    envsubst < ${{ env.VALUES_YML_FULL_PATH }}.orig > ${{ env.VALUES_YML_FULL_PATH }}
+      #    cp ${{ env.CHART_YML_FULL_PATH_ENVSUBST }} ${{ env.CHART_YML_FULL_PATH }}.orig
+      #    envsubst < ${{ env.CHART_YML_FULL_PATH }}.orig > ${{ env.CHART_YML_FULL_PATH }}
+      #  env:
+      #    APP_IMAGE: ${{ env.APL_DOCKER_IMAGE_NAME }}
+      #    APL_NAME: ${{ env.APL_NAME }}
+      #    APL_VERSION: ${{ needs.Build-Push-Image.outputs.aplversion }}
+      #    CONTAINER_PORT: ${{ env.CONTAINER_PORT_APL }}
+      #    PORT: ${{ env.PORT_APL }}
+      #    SVC_TYPE: ${{ env.SVCTYPE_APL }}
+      #    ALB_SCHEME: "internet-facing"
 
       # VERBOSE - LISTS THE THE HELM CHART values.yml FILE 
 
