@@ -12,7 +12,7 @@ Port: $PORT
 NodePort: 30000
 deployment:
   nodeSelector:
-    cloud.google.com/gke-nodepool: my-node-pool
+    cloud.google.com/gke-nodepool: $Node_Pool_Name
   env:
     - name: HELLO_SVC_TYPE
       value: $HELLO_SVC_TYPE
