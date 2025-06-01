@@ -1,9 +1,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.AplName }}
+  name: {{ .values.AplName }}
   annotations:
-    alb.ingress.kubernetes.io/scheme: {{ .Values.service.AlbScheme }}
+    alb.ingress.kubernetes.io/scheme: {{ .values.service.AlbScheme }}
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/HealthCheckProtocol: HTTP
     alb.ingress.kubernetes.io/healthcheck-path: /health
@@ -20,7 +20,7 @@ spec:
       - path: /
         backend:
           service:
-            name: {{ .Values.AplName }}
+            name: {{ .values.AplName }}
             port:
-              number: {{ .Values.Port }}
+              number: {{ .values.Port }}
         pathType: Prefix
