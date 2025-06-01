@@ -11,7 +11,8 @@ containerPort: $CONTAINER_PORT
 Port: $PORT
 NodePort: 30000
 deployment:
-  nodeSelector: $NODE_POOL_NAME
+  nodeSelector: 
+    cloud.google.com/gke-nodepool: $NODE_POOL_NAME
   env:
     - name: HELLO_SVC_TYPE
       value: $HELLO_SVC_TYPE

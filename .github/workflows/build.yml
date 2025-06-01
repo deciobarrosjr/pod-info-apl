@@ -27,7 +27,6 @@ env:
   SVCTYPE_APL: 'ClusterIP'
   CONTAINER_PORT_APL: '3030'
   PORT_APL: '80'
-  NODE_POOL_NAME: 'default-pool'
 
  
 
@@ -187,7 +186,7 @@ jobs:
           PORT: ${{ env.PORT_APL }}
           SVC_TYPE: ${{ env.SVCTYPE_APL }}
           ALB_SCHEME: "internet-facing"
-          NODE_POOL_NAME: ${{ env.NODE_POOL_NAME }}
+
 
       # VERBOSE - LISTS THE THE HELM CHART FILES
 
