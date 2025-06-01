@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .values.AplName }}
+  name: {{ .Values.AplName }}
 spec:
-  type: {{ .values.svcType }}
+  type: {{ .Values.svcType }}
   selector:
-    app: {{ .values.AplName }}
+    app: {{ .Values.AplName }}
   ports:
-    - port: {{ .values.Port }}
+    - port: {{ .Values.Port }}
       targetPort: {{ .Values.containerPort }}
       protocol: TCP
-      {{- if eq .values.svcType "NodePort" }}
-      nodePort: {{ .values.NodePort }}
+      {{- if eq .Values.svcType "NodePort" }}
+      nodePort: {{ .Values.NodePort }}
       {{- end }}

@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .values.AplName }}
+  name: {{ .Values.AplName }}
   annotations:
     releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "America/Sao_Paulo" | quote }}
 spec:
-  replicas: {{ .values.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .values.AplName }}
+      app: {{ .Values.AplName }}
   template:
     metadata:
       labels:
-        app: {{ .values.AplName }}
+        app: {{ .Values.AplName }}
     spec:
       nodeSelector:
-        cloud.google.com/gke-nodepool: {{ .values.Node_Pool_Name }}
+        cloud.google.com/gke-nodepool: {{ .Values.Node_Pool_Name }}
       containers:
-      - image: "{{ .values.AppImage }}:{{ .values.AplVersion }}"
+      - image: "{{ .Values.AppImage }}:{{ .Values.AplVersion }}"
         imagePullPolicy: Always
-        name: {{ .values.AplName }}
+        name: {{ .Values.AplName }}
         ports:
-        - containerPort: {{ .values.containerPort }}
+        - containerPort: {{ .Values.containerPort }}
         env:
-          {{- range .values.deployment.env }}
+          {{- range .Values.deployment.env }}
           - name: {{ .name }}
             value: {{ .value }}
           {{- end }}
