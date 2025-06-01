@@ -2,21 +2,21 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-AppImage: $APP_IMAGE
+AppImage: "${APP_IMAGE}"
 replicaCount: 1
-AplName: $APL_NAME                              # This is the name that will identify each application on the cluster. Ideally it should be unique on the same cluster.
-AplVersion: $APL_VERSION
-svcType: $SVC_TYPE
-containerPort: $CONTAINER_PORT
-Port: $PORT
+AplName: "${APL_NAME}"                          # This is the name that will identify each application on the cluster. Ideally it should be unique on the same cluster.
+AplVersion: "${APL_VERSION}"
+svcType: "${SVC_TYPE}"
+containerPort: "${CONTAINER_PORT}"
+Port: "${PORT}"
 NodePort: 30000
 deployment:
   nodeSelector: 
-    cloud.google.com/gke-nodepool: $NODE_POOL_NAME
+    cloud.google.com/gke-nodepool: "${NODE_POOL_NAME}"
   env:
     - name: HELLO_SVC_TYPE
-      value: $HELLO_SVC_TYPE
+      value: "${HELLO_SVC_TYPE}"
     - name: APL_NAME
-      value: $APL_NAME
+      value: "${APL_NAME}"
 service:
-  AlbScheme: $ALB_SCHEME
+  AlbScheme: "${ALB_SCHEME}"
