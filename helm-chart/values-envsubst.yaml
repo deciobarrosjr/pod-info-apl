@@ -7,8 +7,8 @@ replicaCount: 1
 AplName: "${APL_NAME}"                          # This is the name that will identify each application on the cluster. Ideally it should be unique on the same cluster.
 AplVersion: "${APL_VERSION}"
 svcType: "${SVC_TYPE}"
-containerPort: "${CONTAINER_PORT}"
-Port: "${PORT}"
+containerPort: ${CONTAINER_PORT}
+Port: ${PORT}
 NodePort: 30000
 NodePoolName: "${NODE_POOL_NAME}" 
 deployment:

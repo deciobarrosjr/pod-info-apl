@@ -1,6 +1,7 @@
 # POD-INFO-APL
 This POC is responsible for publishing the pod-info-apl application image and the helm chart on the GitHub Registry to be used by any kubernetes for testing and learning purposes.<br>
-The purpose of this Hello World application is replying information about a POD when the route <span style="color: chocolate;">/info is called.</span><br>
+The purpose of this Hello World application is replying information about a POD when the route <span style="color: chocolate;">/info is called.</span><br><br>
+Use the following curl to access the application: <span style="color: green;">curl http://<span style="color: pink;">IP_Address</span>/info</span>
 
 <br>
 
