@@ -38,4 +38,4 @@ def info():
     return formatted_info, 200, {'Content-Type': 'text/plain'}
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=5000)
+    app.run(host='0.0.0.0', port=5000) # Note that using 'localhost' will allow only local access to the application.
