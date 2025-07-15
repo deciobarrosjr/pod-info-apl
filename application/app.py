@@ -1,9 +1,10 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import os
 import socket
 import platform
 import netifaces
 from kubernetes import client, config
+
 
 app = Flask(__name__)
 
