@@ -4,6 +4,7 @@ import socket
 import platform
 import netifaces
 from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
 
 
 app = Flask(__name__)
@@ -39,11 +40,11 @@ def get_config_map(namespace: str, config_map_name: str):
     # Import Kubernetes client and config only when needed
 
 
-    # Load kubeconfig (usually from ~/.kube/config)
-    config.load_kube_config()
-
-    # Create CoreV1 API client
-    v1 = client.CoreV1Api()
+    # Try to load kubeconfig, fall back to in-cluster config if not found
+    try:
+        config.load_kube_config()
+    except Exception:
+        config.load_incluster_config()
 
     try:
         # Retrieve the ConfigMap
@@ -52,7 +53,10 @@ def get_config_map(namespace: str, config_map_name: str):
         for key, value in config_map.data.items():
             print(f"{key}: {value}")
         return config_map.data
-    except client.exceptions.ApiException as e:
+    except ApiException as e:
+        print(f"Error retrieving ConfigMap: {e}")
+        return None
+    except kubernetes.client.exceptions.ApiException as e:
         print(f"Error retrieving ConfigMap: {e}")
         return None
     
@@ -77,4 +81,4 @@ def config_map():
     
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000) # Note that using 'localhost' will allow only local access to the application.
+    app.run(host='0.0.0.0', port=5000) 
