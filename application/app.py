@@ -70,6 +70,9 @@ def info():
 def config_map():
     namespace = request.args.get('namespace')
     config_map_name = request.args.get('config_map_name')
+
+    print(f"Received request for ConfigMap: {config_map_name} in namespace: {namespace}")
+    
     if not namespace or not config_map_name:
         return jsonify({"error": "Missing 'namespace' or 'config_map_name' query parameter"}), 400
     config_map_data = get_config_map(namespace, config_map_name)
