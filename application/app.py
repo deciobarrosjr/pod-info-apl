@@ -17,7 +17,9 @@ def get_network_info():
     ip_address = socket.gethostbyname(hostname)
     os_version = platform.platform()
     machine_type = platform.machine()
-    
+
+    print(f">>>>>     Listing network information for {hostname}\n")
+
     # Retrieve network mask
     interfaces = netifaces.interfaces()
     netmask = None
@@ -72,7 +74,7 @@ def config_map():
     config_map_name = request.args.get('config_map_name')
 
     print(f"Received request for ConfigMap: {config_map_name} in namespace: {namespace}")
-    
+
     if not namespace or not config_map_name:
         return jsonify({"error": "Missing 'namespace' or 'config_map_name' query parameter"}), 400
     config_map_data = get_config_map(namespace, config_map_name)
