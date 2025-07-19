@@ -37,7 +37,6 @@ def get_network_info():
 
 
 def get_config_map(namespace: str, config_map_name: str):
-    # Import Kubernetes client and config only when needed
 
 
     # Try to load kubeconfig, fall back to in-cluster config if not found
@@ -47,6 +46,8 @@ def get_config_map(namespace: str, config_map_name: str):
         config.load_incluster_config()
 
     try:
+        # Instantiate the Kubernetes CoreV1Api client
+        v1 = client.CoreV1Api()
         # Retrieve the ConfigMap
         config_map = v1.read_namespaced_config_map(name=config_map_name, namespace=namespace)
         print("ConfigMap Data:")
@@ -56,9 +57,7 @@ def get_config_map(namespace: str, config_map_name: str):
     except ApiException as e:
         print(f"Error retrieving ConfigMap: {e}")
         return None
-    except kubernetes.client.exceptions.ApiException as e:
-        print(f"Error retrieving ConfigMap: {e}")
-        return None
+
     
 
 @app.route('/info')
