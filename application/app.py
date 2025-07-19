@@ -30,7 +30,7 @@ def get_network_info():
             break
 
     return {
-        ">>>>>     Listing network information for {hostname}\n"
+        "\n>>>>>     Listing network information for {hostname}\n\n"
         "Machine Name": hostname,
         "IP Address": ip_address,
         "Network Mask": netmask,
@@ -58,7 +58,7 @@ def get_config_map(namespace: str, config_map_name: str):
             print(f"{key}: {value}")
         return config_map.data
     except ApiException as e:
-        print(f"Error retrieving ConfigMap: {e}")
+        print(f"Error retrieving ConfigMap: {e} ConfigMap: {config_map_name} in namespace: {namespace}")
         return None
 
     
