@@ -18,7 +18,7 @@ def get_network_info():
     os_version = platform.platform()
     machine_type = platform.machine()
 
-    print(f">>>>>     Listing network information for {hostname}\n")
+
 
     # Retrieve network mask
     interfaces = netifaces.interfaces()
@@ -30,6 +30,7 @@ def get_network_info():
             break
 
     return {
+        ">>>>>     Listing network information for {hostname}\n"
         "Machine Name": hostname,
         "IP Address": ip_address,
         "Network Mask": netmask,
