@@ -83,7 +83,7 @@ def config_map():
     if config_map_data:
         return jsonify(config_map_data), 200
     else:
-        return jsonify({"error": "ConfigMap not found. ConfigMap: {config_map_name} in namespace: {namespace}"}), 404
+        return jsonify({"error": f"ConfigMap not found. ConfigMap: {config_map_name} in namespace: {namespace}"}), 404
     
 
 if __name__ == '__main__':
