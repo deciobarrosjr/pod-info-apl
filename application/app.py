@@ -40,18 +40,19 @@ def get_network_info():
 
 
 def get_config_map(namespace: str, config_map_name: str):
-
-
-    # Try to load kubeconfig, fall back to in-cluster config if not found
+    # Load kubeconfig, fall back to in-cluster config if not found
     try:
         config.load_kube_config()
     except Exception:
-        config.load_incluster_config()
+        try:
+            config.load_incluster_config()
+        except Exception as e:
+            print(f"Error loading Kubernetes configuration: {e}")
+            return None
 
+    # Instantiate the Kubernetes CoreV1Api client and retrieve the ConfigMap
     try:
-        # Instantiate the Kubernetes CoreV1Api client
         v1 = client.CoreV1Api()
-        # Retrieve the ConfigMap
         config_map = v1.read_namespaced_config_map(name=config_map_name, namespace=namespace)
         print("ConfigMap Data:")
         for key, value in config_map.data.items():
@@ -82,7 +83,7 @@ def config_map():
     if config_map_data:
         return jsonify(config_map_data), 200
     else:
-        return jsonify({"error": "ConfigMap not found"}), 404
+        return jsonify({"error": "ConfigMap not found. ConfigMap: {config_map_name} in namespace: {namespace}"}), 404
     
 
 if __name__ == '__main__':
