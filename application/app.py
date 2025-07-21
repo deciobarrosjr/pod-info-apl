@@ -40,7 +40,7 @@ def get_network_info():
 
 
 def get_config_map(namespace: str, config_map_name: str):
-    # Load kubeconfig, fall back to in-cluster config if not found
+    # Try kubeconfig, fallback to in-cluster config
     try:
         config.load_kube_config()
     except Exception:
@@ -53,13 +53,16 @@ def get_config_map(namespace: str, config_map_name: str):
     # Instantiate the Kubernetes CoreV1Api client and retrieve the ConfigMap
     try:
         v1 = client.CoreV1Api()
+
         config_map = v1.read_namespaced_config_map(name=config_map_name, namespace=namespace)
         print("ConfigMap Data:")
         for key, value in config_map.data.items():
             print(f"{key}: {value}")
-        return config_map.data
+            
+        return dict(config_map.data)
+    
     except ApiException as e:
-        print(f"Error retrieving ConfigMap: {e} ConfigMap: {config_map_name} in namespace: {namespace}")
+        print(f"ApiException when retrieving ConfigMap: {e}")
         return None
 
     
@@ -75,11 +78,10 @@ def config_map():
     namespace = request.args.get('namespace')
     config_map_name = request.args.get('config_map_name')
 
-    print(f"Received request for ConfigMap: {config_map_name} in namespace: {namespace}")
-
     if not namespace or not config_map_name:
-        return jsonify({"error": "Missing 'namespace' or 'config_map_name' query parameter"}), 400
+        return jsonify({"error": f"Missing 'namespace' or 'config_map_name' query parameter. ConfigMap: {config_map_name} in namespace: {namespace}"}), 400
     config_map_data = get_config_map(namespace, config_map_name)
+
     if config_map_data:
         return jsonify(config_map_data), 200
     else:
