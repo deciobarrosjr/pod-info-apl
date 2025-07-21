@@ -88,16 +88,10 @@ def info():
 def config_map():
     namespace = request.args.get('namespace')
     config_map_name = request.args.get('config_map_name')
+    info = get_config_map(namespace, config_map_name)
 
-    if not namespace or not config_map_name:
-        return jsonify({"error": f"Missing 'namespace' or 'config_map_name' query parameter. ConfigMap: {config_map_name} in namespace: {namespace}"}), 400
-    config_map_data = get_config_map(namespace, config_map_name)
-
-    if config_map_data:
-        return jsonify(config_map_data), 200
-    else:
-        return jsonify({"error": f"ConfigMap not found. ConfigMap: {config_map_name} in namespace: {namespace}"}), 404
-    
+    formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n"
+    return formatted_info, 200, {'Content-Type': 'text/plain'}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000) 
