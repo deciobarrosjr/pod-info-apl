@@ -19,9 +19,6 @@ def get_network_info():
     os_version = platform.platform()
     machine_type = platform.machine()
 
-
-
-    # Retrieve network mask
     interfaces = netifaces.interfaces()
     netmask = None
     for iface in interfaces:
@@ -55,7 +52,7 @@ def get_config_map(namespace: str, config_map_name: str):
     try:
         v1 = client.CoreV1Api()
 
-        config_map = v1.read_namespaced_config_map(name=config_map_name, namespace=namespace)
+        config_map = v1.read_namespaced_config_map(config_map_name, namespace)
 
         if not config_map:
           print(f"ConfigMap {config_map_name} not found in namespace {namespace}.")
@@ -65,7 +62,7 @@ def get_config_map(namespace: str, config_map_name: str):
        
         return {
         "\n>>>>>     ConfigMap data for for {config_map_name} found in namespace {namespace}\n\n"
-        "Namespace": config_map.metadata.namespace,
+        "Namespace": config_map.get.metadata.namespace,
         "Name": config_map.metadata.name,
         "Creation Timestamp": config_map.metadata.creation_timestamp,
         "Resource Version": config_map.metadata.resource_version,
