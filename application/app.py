@@ -40,30 +40,41 @@ def get_network_info():
     }
 
 
-def get_all_configmap_data():
-    # Load Kubernetes configuration (inside or outside the cluster)
+def get_config_map(namespace: str, config_map_name: str):
+    # Try kubeconfig, fallback to in-cluster config
     try:
-        config.load_incluster_config()
-    except:
         config.load_kube_config()
+    except Exception:
+        try:
+            config.load_incluster_config()
+        except Exception as e:
+            print(f"Error loading Kubernetes configuration: {e}")
+            return None
 
-    v1 = client.CoreV1Api()
+    # Instantiate the Kubernetes CoreV1Api client and retrieve the ConfigMap
+    try:
+        v1 = client.CoreV1Api()
 
-    # Dictionary to store all ConfigMap data
-    all_configmaps_data = {}
+        config_map = v1.read_namespaced_config_map(name=config_map_name, namespace=namespace)
 
-    # Get all ConfigMaps from all namespaces
-    configmaps = v1.list_config_map_for_all_namespaces().items
-
-    for cm in configmaps:
-        cm_name = cm.metadata.name
-        cm_ns = cm.metadata.namespace
-        cm_data = cm.data if cm.data else {}
-
-        # Use (namespace, name) as the unique key
-        all_configmaps_data[(cm_ns, cm_name)] = cm_data
-
-    return all_configmaps_data
+        if not config_map:
+          print(f"ConfigMap {config_map_name} not found in namespace {namespace}.")
+          return None
+        else:
+          print(f"ConfigMap {config_map_name} found in namespace {namespace}.")
+       
+        return {
+        "\n>>>>>     ConfigMap data for for {config_map_name} found in namespace {namespace}\n\n"
+        "Namespace": config_map.metadata.namespace,
+        "Name": config_map.metadata.name,
+        "Creation Timestamp": config_map.metadata.creation_timestamp,
+        "Resource Version": config_map.metadata.resource_version,
+        "Data": config_map.data if config_map.data else "No data found"
+        }
+    
+    except ApiException as e:
+        print(f"ApiException when retrieving ConfigMap: {e}")
+        return None
 
     
 
@@ -75,8 +86,18 @@ def info():
 
 @app.route('/configmap')
 def config_map():
-    data = get_all_configmap_data()
-    return jsonify(data), 200, {'Content-Type': 'application/json'}
+    namespace = request.args.get('namespace')
+    config_map_name = request.args.get('config_map_name')
+
+    if not namespace or not config_map_name:
+        return jsonify({"error": f"Missing 'namespace' or 'config_map_name' query parameter. ConfigMap: {config_map_name} in namespace: {namespace}"}), 400
+    config_map_data = get_config_map(namespace, config_map_name)
+
+    if config_map_data:
+        return jsonify(config_map_data), 200
+    else:
+        return jsonify({"error": f"ConfigMap not found. ConfigMap: {config_map_name} in namespace: {namespace}"}), 404
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000) 
