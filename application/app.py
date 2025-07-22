@@ -47,6 +47,14 @@ def get_configmap(namespace, name):
     try:
         v1 = client.CoreV1Api()
         configmap = v1.read_namespaced_config_map(name=name, namespace=namespace)
+
+        print("ConfigMap '%s' in namespace '%s' retrieved successfully.", name, namespace)
+        print("ConfigMap data: %s", configmap.data)
+        
+        if not configmap.data:
+            return jsonify({"message": "ConfigMap is empty"}), 404
+
+
         return jsonify(configmap.data)
     except client.exceptions.ApiException as e:
         return jsonify({"error": e.reason}), e.status
