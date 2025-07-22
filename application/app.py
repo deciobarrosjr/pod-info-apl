@@ -3,6 +3,7 @@ import os
 import socket
 import platform
 import netifaces
+import logging
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -11,6 +12,8 @@ from kubernetes.client.exceptions import ApiException
 app = Flask(__name__)
 
 __version__ = "1.0.0"
+
+logging.basicConfig(level=logging.INFO)
 
 
 def get_network_info():
@@ -36,29 +39,58 @@ def get_network_info():
         "OS Version": os_version
     }
 
+
+def get_config_map(namespace: str, config_map_name: str):
+    # Try kubeconfig, fallback to in-cluster config
+    try:
+        config.load_kube_config()
+    except Exception:
+        try:
+            config.load_incluster_config()
+        except Exception as e:
+            print(f"Error loading Kubernetes configuration: {e}")
+            return None
+
+    # Instantiate the Kubernetes CoreV1Api client and retrieve the ConfigMap
+    try:
+    
+      v1 = client.CoreV1Api()
+      config_map = v1.read_namespaced_config_map(name=config_map_name, namespace=namespace)
+      logging.info(f"ConfigMap {config_map_name} data retrieved successfully from namespace {namespace} .")
+
+      if not config_map:
+        logging.error(f"ConfigMap {config_map_name} not found in namespace {namespace}.")
+        return None
+
+      if not config_map.data:
+        logging.error(f"ConfigMap {config_map_name} has no data.")
+        return None
+      else:
+        return config_map.data
+
+    except ApiException as e:
+        logging.error(f"ApiException when retrieving ConfigMap: {e}")
+        return None
+
+    
+
 @app.route('/info')
 def info():
     info = get_network_info()
     formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n"
     return formatted_info, 200, {'Content-Type': 'text/plain'}
 
-@app.route("/configmap/<namespace>/<name>")
-def get_configmap(namespace, name):
-    try:
-        v1 = client.CoreV1Api()
-        configmap = v1.read_namespaced_config_map(name=name, namespace=namespace)
+@app.route('/configmap')
+def config_map():
+    namespace = request.args.get('namespace')
+    config_map_name = request.args.get('config_map_name')
+    info = get_config_map(namespace, config_map_name)
 
-        print("ConfigMap '%s' in namespace '%s' retrieved successfully.", name, namespace)
-        print("ConfigMap data: %s", configmap.data)
-        
-        if not configmap.data:
-            return jsonify({"message": "ConfigMap is empty"}), 404
+    if info is None:
+        return "ConfigMap not found or error occurred.\n", 404, {'Content-Type': 'text/plain'}
 
-
-        return jsonify(configmap.data)
-    except client.exceptions.ApiException as e:
-        return jsonify({"error": e.reason}), e.status
-
+    formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n"
+    return formatted_info, 200, {'Content-Type': 'text/plain'}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000) 
