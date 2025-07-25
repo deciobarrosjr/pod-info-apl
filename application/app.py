@@ -87,7 +87,7 @@ def config_map():
     info = get_config_map(namespace, config_map_name)
 
     if info is None:
-        return "ConfigMap not found or error occurred.\n", 404, {'Content-Type': 'text/plain'}
+        return "ConfigMap not found or an error occurred.\n", 404, {'Content-Type': 'text/plain'}
 
     formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n"
     return formatted_info, 200, {'Content-Type': 'text/plain'}
