@@ -71,6 +71,7 @@ def get_config_map(namespace: str, config_map_name: str):
     except ApiException as e:
         logging.error(f"ApiException when retrieving ConfigMap: {e}")
         return None
+
     
 
 @app.route('/info')
