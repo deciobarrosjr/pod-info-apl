@@ -84,7 +84,7 @@ def info():
 def config_map():
     namespace = request.args.get('namespace')
     config_map_name = request.args.get('config_map_name')
-    info = get_config_map(namespace, config_map_name)
+    info = get_config_map(config_map_name, namespace)
 
     if info is None:
         return "ConfigMap not found or an error occurred.\n", 404, {'Content-Type': 'text/plain'}
