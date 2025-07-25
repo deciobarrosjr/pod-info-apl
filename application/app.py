@@ -67,6 +67,7 @@ def get_config_map(configmap_name: str, namespace: str):
         return None
       else:
         return {
+          "\n>>>>>     Listing configmap {configmap_name} on the namespace {namespace}\n\n"
           "ConfigMap Name": configmap_name,
           "Namespace": namespace,
           "ConfigMap Data": config_map.data
