@@ -66,7 +66,10 @@ def get_config_map(configmap_name: str, namespace: str):
         logging.error(f"ConfigMap {configmap_name} has no data.")
         return None
       else:
-        return config_map.data
+        return {
+          "\n>>>>>     Listing rhe configmap {configmap_name} on the namespace  {namespace}.\n\n"
+          "{config_map.data}"
+      }
 
     except ApiException as e:
         logging.error(f"ApiException when retrieving ConfigMap: {e}")
