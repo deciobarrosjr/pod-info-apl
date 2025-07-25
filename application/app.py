@@ -67,10 +67,10 @@ def get_config_map(configmap_name: str, namespace: str):
         return None
       else:
         return {
-          "\n>>>>>     Listing rhe configmap {configmap_name} on the namespace  {namespace}.\n\n"
-          "{config_map.data}"
-      }
-
+          "ConfigMap Name": configmap_name,
+          "Namespace": namespace,
+          "ConfigMap Data": config_map.data
+        }
     except ApiException as e:
         logging.error(f"ApiException when retrieving ConfigMap: {e}")
         return None
