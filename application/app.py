@@ -40,7 +40,7 @@ def get_network_info():
     }
 
 
-def get_config_map(namespace: str, config_map_name: str):
+def get_config_map(configmap_name: str, namespace: str):
     # Try kubeconfig, fallback to in-cluster config
     try:
         config.load_kube_config()
@@ -55,15 +55,15 @@ def get_config_map(namespace: str, config_map_name: str):
     try:
     
       v1 = client.CoreV1Api()
-      config_map = v1.read_namespaced_config_map(config_map_name, namespace)
-      logging.info(f"ConfigMap {config_map_name} data retrieved successfully from namespace {namespace} .")
+      config_map = v1.read_namespaced_config_map(configmap_name, namespace)
+      logging.info(f"ConfigMap {configmap_name} data retrieved successfully from namespace {namespace} .")
 
       if not config_map:
-        logging.error(f"ConfigMap {config_map_name} not found in namespace {namespace}.")
+        logging.error(f"ConfigMap {configmap_name} not found in namespace {namespace}.")
         return None
 
       if not config_map.data:
-        logging.error(f"ConfigMap {config_map_name} has no data.")
+        logging.error(f"ConfigMap {configmap_name} has no data.")
         return None
       else:
         return config_map.data
@@ -83,8 +83,8 @@ def info():
 @app.route('/configmap')
 def config_map():
     namespace = request.args.get('namespace')
-    config_map_name = request.args.get('config_map_name')
-    info = get_config_map(config_map_name, namespace)
+    configmap_name = request.args.get('configmap_name')
+    info = get_config_map(configmap_name, namespace)
 
     if info is None:
         return "ConfigMap not found or an error occurred.\n", 404, {'Content-Type': 'text/plain'}
