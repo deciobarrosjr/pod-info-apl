@@ -36,8 +36,7 @@ def get_network_info():
         "IP Address": ip_address,
         "Network Mask": netmask,
         "Machine Type": machine_type,
-        "OS Version": os_version,
-        "": "\n"              # Add an empty key with a newline value to ensure a line break at the end        
+        "OS Version": os_version,       
     }
 
 
@@ -72,7 +71,6 @@ def get_config_map(configmap_name: str, namespace: str):
           "ConfigMap Name": configmap_name,
           "Namespace": namespace,
           "ConfigMap Data": config_map.data,
-          "": "\n"              # Add an empty key with a newline value to ensure a line break at the end
         }
     except ApiException as e:
         logging.error(f"ApiException when retrieving ConfigMap: {e}")
@@ -83,7 +81,7 @@ def get_config_map(configmap_name: str, namespace: str):
 @app.route('/info')
 def info():
     info = get_network_info()
-    formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n"
+    formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n\n"
     return formatted_info, 200, {'Content-Type': 'text/plain'}
 
 @app.route('/configmap')
@@ -95,7 +93,7 @@ def config_map():
     if info is None:
         return "ConfigMap not found or an error occurred.\n", 404, {'Content-Type': 'text/plain'}
 
-    formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n"
+    formatted_info = "\n".join(f"{key}: {value}" for key, value in info.items()) + "\n\n"
     return formatted_info, 200, {'Content-Type': 'text/plain'}
 
 if __name__ == '__main__':
