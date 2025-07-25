@@ -55,7 +55,7 @@ def get_config_map(namespace: str, config_map_name: str):
     try:
     
       v1 = client.CoreV1Api()
-      config_map = v1.read_namespaced_config_map(name=config_map_name, namespace=namespace)
+      config_map = v1.read_namespaced_config_map(config_map_name, namespace)
       logging.info(f"ConfigMap {config_map_name} data retrieved successfully from namespace {namespace} .")
 
       if not config_map:
