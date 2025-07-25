@@ -36,7 +36,8 @@ def get_network_info():
         "IP Address": ip_address,
         "Network Mask": netmask,
         "Machine Type": machine_type,
-        "OS Version": os_version
+        "OS Version": os_version,
+        "": "\n"              # Add an empty key with a newline value to ensure a line break at the end        
     }
 
 
@@ -70,7 +71,8 @@ def get_config_map(configmap_name: str, namespace: str):
           "\n>>>>>     Listing configmap {configmap_name} on the namespace {namespace}\n\n"
           "ConfigMap Name": configmap_name,
           "Namespace": namespace,
-          "ConfigMap Data": config_map.data
+          "ConfigMap Data": config_map.data,
+          "": "\n"              # Add an empty key with a newline value to ensure a line break at the end
         }
     except ApiException as e:
         logging.error(f"ApiException when retrieving ConfigMap: {e}")
